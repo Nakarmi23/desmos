@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: desmos
+      POSTGRES_PASSWORD: desmos
+      POSTGRES_DB: desmos
+    ports:
+      - "5432:5432"
+    volumes:
+      # - desmos_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+volumes:
+  desmos_data:
