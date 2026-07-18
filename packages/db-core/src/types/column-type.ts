@@ -2,11 +2,13 @@ import type ForeignKeyEventAction from "./foreign-key-event-action-type";
 
 type DBColumnTypeKind =
   | "INTEGER"
+  | "DECIMAL"
   | "VARCHAR"
   | "TEXT"
   | "BOOLEAN"
   | "DATE"
-  | "DATETIME"
+  | "TIMESTAMP"
+  | "TIMESTAMPTZ"
   | "UUID";
 
 type DBColumnType = {
@@ -32,14 +34,14 @@ interface DBColumnReferencedTable {
 interface DBColumn {
   name: string;
   type: DBColumnType;
-  isNullable: boolean;
-  isUnique: boolean;
+  isNullable?: boolean;
+  isUnique?: boolean;
   defaultValue?: string | null;
-  isAutoIncrement: boolean;
-  isPrimaryKey: boolean;
+  isAutoIncrement?: boolean;
+  isPrimaryKey?: boolean;
   generated?: DBColumnGenerated | null;
   referencedTable?: DBColumnReferencedTable | null;
-  indexed: boolean;
+  indexed?: boolean;
 }
 
 export type {

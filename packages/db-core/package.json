@@ -6,12 +6,20 @@
   "exports": {
     "./*": "./src/*.ts"
   },
-  "scripts": {},
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watchAll",
+    "test:coverage": "jest --coverage"
+  },
   "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/jest": "^30.0.0",
     "@types/knex": "^0.16.1",
     "@types/lodash": "^4.17.24",
     "@types/node": "^25.9.3",
-    "@repo/typescript-config": "workspace:*"
+    "jest": "^30.4.2",
+    "pg": "^8.22.0",
+    "ts-jest": "^29.4.11"
   },
   "dependencies": {
     "knex": "^3.2.10",

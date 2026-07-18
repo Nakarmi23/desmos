@@ -5,9 +5,12 @@ import _ from "lodash";
 
 function rawColumnToKnexColumn(
   tableBuilder: Knex.TableBuilder,
-  dbClient: DBClient,
   column: DBColumn,
 ): Knex.TableBuilder {
+  if (!tableBuilder || !column) {
+    throw new Error("Missing required parameters for rawColumnToKnexColumn");
+  }
+
   let specificType = "";
 
   switch (column.type.kind) {
@@ -15,23 +18,24 @@ function rawColumnToKnexColumn(
     case "TEXT":
     case "BOOLEAN":
     case "DATE":
-    case "DATETIME":
+    case "TIMESTAMP":
+    case "TIMESTAMPTZ":
+    case "UUID":
       specificType = column.type.kind;
       break;
     case "VARCHAR":
-      specificType = `${column.type.kind}(${column.type.length || 255})`;
-      break;
-    case "UUID":
-      specificType = dbClient === "postgres" ? "UUID" : `BINARY(36)`;
+      specificType = `${column.type.kind}(${Math.floor(column.type.length || 225)})`;
       break;
     default:
       throw new Error(`Unsupported column type: ${column.type.kind}`);
   }
 
-  if (column.isNullable) {
-    specificType += " NULLABLE";
-  } else {
-    specificType += " NOT NULLABLE";
+  if (!column.isPrimaryKey) {
+    if (column.isNullable) {
+      specificType += " NULL";
+    } else {
+      specificType += " NOT NULL";
+    }
   }
 
   if (column.defaultValue !== undefined) {
@@ -39,11 +43,7 @@ function rawColumnToKnexColumn(
   }
 
   if (column.isAutoIncrement) {
-    if (dbClient === "postgres") {
-      specificType += " GENERATED ALWAYS AS IDENTITY";
-    } else if (dbClient === "mysql") {
-      specificType += " AUTO_INCREMENT";
-    }
+    specificType += " GENERATED ALWAYS AS IDENTITY";
   }
 
   if (column.generated) {
@@ -64,16 +64,15 @@ function rawColumnToKnexColumn(
       relationBuilder.onUpdate(column.referencedTable.onUpdate);
   }
 
-  if (column.isUnique) {
-    tableBuilder.unique(column.name);
-  }
-
   if (column.isPrimaryKey) {
     tableBuilder.primary([column.name]);
-  }
-
-  if (column.indexed) {
-    tableBuilder.index(column.name);
+  } else {
+    if (column.isUnique) {
+      tableBuilder.unique(column.name);
+    }
+    if (column.indexed) {
+      tableBuilder.index(column.name);
+    }
   }
 
   return tableBuilder;
