@@ -1,6 +1,6 @@
 # Issue tracker: GitHub
 
-Issues and specs for this repo live as GitHub issues in `Nakarmi23/demos`. Use the `gh` CLI for all operations.
+Issues and specs for this repo live as GitHub issues in `Nakarmi23/desmos`. Use the `gh` CLI for all operations.
 
 ## Conventions
 

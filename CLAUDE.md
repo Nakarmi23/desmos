@@ -39,3 +39,17 @@ Gotchas that aren't obvious from a quick read:
   Jest-mock stand-ins for `Knex.SchemaBuilder`/`TableBuilder`/foreign-key builder, exposing
   `_tableBuilder`/`_foreignBuilder` so assertions can check exact builder calls instead of executing
   SQL. `pg` + docker-compose exist for integration testing but aren't used by the current suite.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub issues in `Nakarmi23/desmos`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five canonical roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context: root `CONTEXT-MAP.md` + per-package `CONTEXT.md`/`docs/adr/`. See `docs/agents/domain.md`.
