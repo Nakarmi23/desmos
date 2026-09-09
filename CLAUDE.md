@@ -42,16 +42,7 @@ The package models a database table as plain data and lowers it to Knex builder 
 
 Tests avoid a real Knex instance; `src/utilities/test-helpers.ts` provides `makeMockSchemaBuilder()` / `makeMockTableBuilder()` / `makeMockForeignBuilder()`, which are chainable Jest-mock stand-ins for `Knex.SchemaBuilder`, `Knex.TableBuilder`, and the foreign-key sub-builder returned by `.foreign()`. Each mock table builder exposes `_tableBuilder`/`_foreignBuilder` so tests can assert on the exact builder calls (e.g. `tableBuilder.specificType`, `tableBuilder._foreignBuilder.onDelete`) rather than executing SQL. `pg` and a running Postgres (via `docker-compose.yml`) exist for integration-level testing but the current unit tests are pure mock-based.
 
-## Agent skills
+# Design System
 
-### Issue tracker
-
-Issues are tracked in GitHub Issues (`Nakarmi23/demos`), via the `gh` CLI. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Default label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Multi-context: `CONTEXT-MAP.md` at the root, one `CONTEXT.md` + `docs/adr/` per real package under `packages/*`. See `docs/agents/domain.md`.
+- Always reference `DESIGN.md` for all UI styling, components, colors, and typography.
+- Do not invent or hardcode color hex values, spacing numbers, or font sizes that deviate from `DESIGN.md`.
