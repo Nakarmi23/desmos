@@ -1,11 +1,11 @@
 import Image from "next/image";
 
-import { createCaller } from "@/trpc/caller";
-import { createContextInner } from "@/trpc/context";
+import { HydrateClient, prefetchHealthCheck } from "@/trpc/server";
+
+import HealthStatus from "./health-status";
 
 export default async function Home() {
-  const caller = createCaller(await createContextInner());
-  const health = await caller.health.check();
+  await prefetchHealthCheck();
 
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
@@ -43,10 +43,9 @@ export default async function Home() {
             </a>{" "}
             center.
           </p>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            API status: <span className="font-medium">{health.status}</span>{" "}
-            (checked {health.timestamp.toLocaleTimeString()})
-          </p>
+          <HydrateClient>
+            <HealthStatus />
+          </HydrateClient>
         </div>
         <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
           <a
