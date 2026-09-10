@@ -16,6 +16,21 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Testing
+
+Tests are split into two suites so the default run never depends on external
+services such as a running database:
+
+- `pnpm test` — the default unit suite. Runs every `*.test.ts(x)` file **except**
+  those matching `*.integration.test.ts`.
+- `pnpm test:integration` — runs **only** `*.integration.test.ts(x)` files (via
+  `jest.integration.config.js`). It passes cleanly when no such files exist yet.
+
+**Naming convention:** name a test `*.integration.test.ts` when it needs a
+database or other external dependency; everything else is a plain `*.test.ts`
+unit test. No further config changes are needed to add an integration test —
+just follow the suffix.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
