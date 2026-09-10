@@ -8,7 +8,7 @@ import { tv } from "tailwind-variants";
 export const sidebarStyles = tv({
   slots: {
     root: [
-      "group flex h-full shrink-0 flex-col overflow-hidden border-r border-border bg-surface",
+      "group flex h-vh shrink-0 flex-col overflow-hidden border-r border-border bg-surface",
       "transition-[width] duration-200 ease-out",
       "data-[open]:w-60 data-[closed]:w-16",
     ],
@@ -28,7 +28,7 @@ export const sidebarStyles = tv({
     brandLabelText: "text-sm font-medium text-text",
     nav: "flex flex-1 flex-col gap-1 p-2",
     navLink: [
-      "flex items-center rounded-md border-l-2 border-transparent px-3 py-2 text-text-subtle",
+      "flex items-center rounded-md px-3 py-2 text-text-subtle",
       "group-data-[open]:gap-3 group-data-[closed]:justify-center",
       "hover:bg-background-neutral-hovered hover:text-text",
       "data-[active]:border-border-selected data-[active]:bg-background-selected data-[active]:text-text-selected",
@@ -41,7 +41,7 @@ export const sidebarStyles = tv({
       "group-data-[open]:w-auto group-data-[open]:opacity-100",
       "group-data-[closed]:w-0 group-data-[closed]:opacity-0",
     ],
-    footer: "border-t border-border p-2",
+    footer: "border-t border-border p-2 group-data-[closed]:flex group-data-[closed]:justify-center",
     // `Collapsible.Trigger` carries `data-panel-open`; its own `group` class
     // is what `collapseIcon` rotates against.
     collapseTrigger: [
