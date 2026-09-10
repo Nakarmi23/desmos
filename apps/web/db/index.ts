@@ -30,9 +30,7 @@ const SHUTDOWN_SIGNALS = ["SIGTERM", "SIGINT"] as const;
  * real one) so tests can drive it with a fake emitter instead of sending
  * real signals to the test runner.
  */
-export function registerShutdownHandlers(
-  proc: NodeJS.Process = process,
-): void {
+export function registerShutdownHandlers(proc: NodeJS.Process = process): void {
   for (const signal of SHUTDOWN_SIGNALS) {
     proc.once(signal, () => {
       void destroyPool().finally(() => proc.exit(0));

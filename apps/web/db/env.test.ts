@@ -43,7 +43,10 @@ describe("parseDbEnv", () => {
   });
 
   it("lets explicit values override the dev/test defaults", () => {
-    const parsed = parseDbEnv({ NODE_ENV: "development", DB_HOST: "example.com" });
+    const parsed = parseDbEnv({
+      NODE_ENV: "development",
+      DB_HOST: "example.com",
+    });
     expect(parsed.DB_HOST).toBe("example.com");
     expect(parsed.DB_USER).toBe("desmos");
   });
