@@ -76,7 +76,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   const pick = await sandcastle.run({
     name: "picker",
     maxIterations: 1,
-    agent: sandcastle.claudeCode("claude-opus-4-8"),
+    agent: sandcastle.claudeCode("claude-sonnet-5", { effort: 'medium' }),
     sandbox: docker(),
     promptFile: "./.sandcastle/pick-prompt.md",
     output: sandcastle.Output.string({ tag: "issue" }),
@@ -122,7 +122,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     const implement = await sandbox.run({
       name: "implementer",
       maxIterations: 1,
-      agent: sandcastle.claudeCode("claude-opus-4-8"),
+      agent: sandcastle.claudeCode("claude-sonnet-5"),
       promptFile: "./.sandcastle/implement-prompt.md",
       promptArgs: {
         ISSUE_NUMBER: issueNumber,
@@ -152,7 +152,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     await sandbox.run({
       name: "reviewer",
       maxIterations: 1,
-      agent: sandcastle.claudeCode("claude-opus-4-8"),
+      agent: sandcastle.claudeCode("claude-opus-5"),
       promptFile: "./.sandcastle/review-prompt.md",
       promptArgs: {
         BRANCH: branch,
