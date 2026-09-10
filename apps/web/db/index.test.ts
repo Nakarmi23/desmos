@@ -1,8 +1,13 @@
 import { EventEmitter } from "node:events";
 
+// Every test needs its own copy of the module: destroying the pool is
+// permanent, so a pool shared across tests would already be dead.
+beforeEach(() => {
+  jest.resetModules();
+});
+
 describe("db", () => {
   it("exposes a Knex query builder", async () => {
-    jest.resetModules();
     const { db, destroyPool } = await import("./index");
 
     expect(typeof db.raw).toBe("function");
@@ -12,7 +17,6 @@ describe("db", () => {
 
 describe("destroyPool", () => {
   it("is idempotent: concurrent calls share the same destroy", async () => {
-    jest.resetModules();
     const { destroyPool } = await import("./index");
 
     expect(destroyPool()).toBe(destroyPool());
@@ -24,10 +28,8 @@ describe("registerShutdownHandlers", () => {
   it.each(["SIGTERM", "SIGINT"] as const)(
     "destroys the pool and exits the process on %s",
     async (signal) => {
-      jest.resetModules();
-      const { db, destroyPool, registerShutdownHandlers } = await import(
-        "./index"
-      );
+      const { db, destroyPool, registerShutdownHandlers } =
+        await import("./index");
       const proc = new EventEmitter() as unknown as NodeJS.Process;
       proc.exit = jest.fn() as unknown as typeof process.exit;
 
