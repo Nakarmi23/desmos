@@ -3,9 +3,12 @@
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { isNavItemActive } from "../sidebar/nav-active";
-import { NAV_ITEMS } from "../sidebar/nav-items";
-import { topBarRoot } from "./top-bar.styles";
+import { isNavItemActive } from "@/components/nav/nav-active";
+import { NAV_ITEMS } from "@/components/nav/nav-items";
+
+import { topBarStyles } from "./top-bar.styles";
+
+const styles = topBarStyles();
 
 export function TopBar({ actions }: { actions?: ReactNode }) {
   const pathname = usePathname();
@@ -14,11 +17,9 @@ export function TopBar({ actions }: { actions?: ReactNode }) {
   );
 
   return (
-    <header className={topBarRoot()}>
-      <h1 className="text-base font-medium text-text">
-        {activeItem?.label ?? "Dashboard"}
-      </h1>
-      <div className="flex items-center gap-2">{actions}</div>
+    <header className={styles.root()}>
+      <h1 className={styles.title()}>{activeItem?.label ?? "Dashboard"}</h1>
+      <div className={styles.actions()}>{actions}</div>
     </header>
   );
 }

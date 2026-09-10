@@ -9,14 +9,11 @@ import {
   type ReactNode,
 } from "react";
 
-import {
-  SIDEBAR_COLLAPSED_COOKIE_MAX_AGE,
-  SIDEBAR_COLLAPSED_COOKIE_NAME,
-} from "./sidebar-cookie";
+import { serializeSidebarCollapsedCookie } from "./sidebar-cookie";
 
 interface SidebarContextValue {
   collapsed: boolean;
-  toggleCollapsed: () => void;
+  setCollapsed: (collapsed: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
@@ -28,30 +25,29 @@ export function SidebarProvider({
   defaultCollapsed: boolean;
   children: ReactNode;
 }) {
-  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const [collapsed, setCollapsedState] = useState(defaultCollapsed);
 
-  const toggleCollapsed = useCallback(() => {
-    setCollapsed((previous) => {
-      const next = !previous;
-      document.cookie = `${SIDEBAR_COLLAPSED_COOKIE_NAME}=${next}; path=/; max-age=${SIDEBAR_COLLAPSED_COOKIE_MAX_AGE}`;
-      return next;
-    });
+  // Persisting on every change (rather than in an effect) keeps the cookie
+  // untouched for users who never toggle the sidebar.
+  const setCollapsed = useCallback((next: boolean) => {
+    setCollapsedState(next);
+    document.cookie = serializeSidebarCollapsedCookie(next);
   }, []);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "b") {
         event.preventDefault();
-        toggleCollapsed();
+        setCollapsed(!collapsed);
       }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [toggleCollapsed]);
+  }, [collapsed, setCollapsed]);
 
   return (
-    <SidebarContext.Provider value={{ collapsed, toggleCollapsed }}>
+    <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
       {children}
     </SidebarContext.Provider>
   );

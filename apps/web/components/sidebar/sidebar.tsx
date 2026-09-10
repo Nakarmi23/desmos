@@ -1,45 +1,37 @@
 "use client";
 
+import { Collapsible } from "@base-ui/react/collapsible";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Collapsible } from "@base-ui/react/collapsible";
+
+import { isNavItemActive } from "@/components/nav/nav-active";
+import { NAV_ITEMS } from "@/components/nav/nav-items";
 
 import { useSidebar } from "./sidebar-provider";
-import { isNavItemActive } from "./nav-active";
-import { NAV_ITEMS } from "./nav-items";
-import {
-  brandLabelPanel,
-  collapseIcon,
-  collapseTrigger,
-  navIconGlyph,
-  navLabelText,
-  navLink,
-  sidebarRoot,
-} from "./sidebar.styles";
+import { sidebarStyles } from "./sidebar.styles";
+
+const styles = sidebarStyles();
 
 export function Sidebar() {
-  const { collapsed, toggleCollapsed } = useSidebar();
+  const { collapsed, setCollapsed } = useSidebar();
   const pathname = usePathname();
 
   return (
     <Collapsible.Root
       open={!collapsed}
-      onOpenChange={() => toggleCollapsed()}
-      render={<aside className={sidebarRoot()} />}
+      onOpenChange={(open) => setCollapsed(!open)}
+      render={<aside className={styles.root()} />}
     >
-      <div className="flex h-14 items-center border-b border-border px-3 group-data-[open]:gap-3 group-data-[closed]:justify-center">
-        <span
-          aria-hidden
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-background-neutral-hovered text-sm font-medium text-text"
-        >
+      <div className={styles.header()}>
+        <span aria-hidden className={styles.brandGlyph()}>
           D
         </span>
-        <Collapsible.Panel className={brandLabelPanel()}>
-          <span className="text-sm font-medium text-text">Desmos</span>
+        <Collapsible.Panel className={styles.brandLabelPanel()}>
+          <span className={styles.brandLabelText()}>Desmos</span>
         </Collapsible.Panel>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 p-2">
+      <nav className={styles.nav()}>
         {NAV_ITEMS.map((item) => {
           const active = isNavItemActive(pathname, item.href);
 
@@ -48,24 +40,24 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               data-active={active || undefined}
-              className={navLink()}
+              className={styles.navLink()}
             >
-              <span aria-hidden className={navIconGlyph()}>
+              <span aria-hidden className={styles.navIconGlyph()}>
                 {item.label.charAt(0)}
               </span>
-              <span className={navLabelText()}>{item.label}</span>
+              <span className={styles.navLabelText()}>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-border p-2">
-        <Collapsible.Trigger className={collapseTrigger()}>
+      <div className={styles.footer()}>
+        <Collapsible.Trigger className={styles.collapseTrigger()}>
           <svg
             aria-hidden
             viewBox="0 0 16 16"
             fill="none"
-            className={collapseIcon()}
+            className={styles.collapseIcon()}
           >
             <path
               d="M10 3 6 8l4 5"
