@@ -13,6 +13,24 @@
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
+/*
+ * Dashboard shell tokens, lifted verbatim from DESIGN.md's `colors` YAML
+ * (see apps/web/DESIGN.md). Exposed via `@theme` so shell components use
+ * `bg-surface`, `text-text-subtle`, etc. instead of hardcoded hex values.
+ */
+@theme {
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f8f8f8;
+  --color-text: #292a2e;
+  --color-text-subtle: #505258;
+  --color-text-selected: #1868db;
+  --color-border: #0b120e24;
+  --color-border-selected: #1868db;
+  --color-background-neutral-hovered: #0b120e24;
+  --color-background-selected: #e9f2fe;
+  --color-background-selected-hovered: #cfe1fd;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

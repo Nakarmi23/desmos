@@ -13,6 +13,7 @@
     "db:migrate": "tsx node_modules/knex/bin/cli.js migrate:latest --knexfile db/knexfile.ts"
   },
   "dependencies": {
+    "@base-ui/react": "^1.8.0",
     "@tanstack/react-query": "5.102.8",
     "@trpc/client": "11.18.0",
     "@trpc/server": "11.18.0",
@@ -23,6 +24,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "superjson": "2.2.6",
+    "tailwind-variants": "^3.3.1",
     "zod": "^4.5.4"
   },
   "devDependencies": {
