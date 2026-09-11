@@ -4,13 +4,16 @@ import userEvent from "@testing-library/user-event";
 import { SidebarProvider } from "./sidebar-provider";
 import { Sidebar } from "./sidebar";
 
+// `usePathname` has no router to read from outside a Next.js app, so pin it to
+// the first NAV_ITEMS href — the route the active-nav-item test asserts on.
 jest.mock("next/navigation", () => ({
   usePathname: () => "/overview",
 }));
 
-function renderSidebar(defaultCollapsed: boolean) {
+/** Renders an expanded sidebar; tests collapse it by clicking the trigger. */
+function renderSidebar() {
   return render(
-    <SidebarProvider defaultCollapsed={defaultCollapsed}>
+    <SidebarProvider defaultCollapsed={false}>
       <Sidebar />
     </SidebarProvider>,
   );
@@ -19,7 +22,7 @@ function renderSidebar(defaultCollapsed: boolean) {
 describe("Sidebar", () => {
   it("collapses when the toggle is clicked, and expands again on a second click", async () => {
     const user = userEvent.setup();
-    renderSidebar(false);
+    renderSidebar();
 
     const sidebar = screen.getByRole("complementary");
     expect(sidebar).toHaveAttribute("data-open");
@@ -46,7 +49,7 @@ describe("Sidebar", () => {
   });
 
   it("marks the nav item for the current route as active with aria-current", () => {
-    renderSidebar(false);
+    renderSidebar();
 
     const activeLink = screen.getByRole("link", { name: "Overview" });
     expect(activeLink).toHaveAttribute("aria-current", "page");
