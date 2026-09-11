@@ -20,9 +20,11 @@ module.exports = {
   ],
   // The default `test` suite must never depend on a running database, so it
   // skips any `*.integration.test.ts` file. Those run via `test:integration`
-  // (see jest.integration.config.js).
+  // (see jest.integration.config.js). It also skips `*.dom.test.tsx` files,
+  // which need jsdom and run via `test:dom` (see jest.dom.config.js).
   testPathIgnorePatterns: [
     "/node_modules/",
     "\\.integration\\.test\\.[tj]sx?$",
+    "\\.dom\\.test\\.[tj]sx?$",
   ],
 };

@@ -10,6 +10,7 @@
     "test": "jest",
     "test:watch": "jest --watchAll",
     "test:integration": "jest --config jest.integration.config.js --passWithNoTests",
+    "test:dom": "jest --config jest.dom.config.js",
     "db:migrate": "tsx node_modules/knex/bin/cli.js migrate:latest --knexfile db/knexfile.ts"
   },
   "dependencies": {
@@ -29,6 +30,9 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -36,6 +40,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.5.1",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.11",
     "tsx": "^4.19.2",
