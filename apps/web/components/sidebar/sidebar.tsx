@@ -40,6 +40,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               data-active={active || undefined}
+              aria-current={active ? "page" : undefined}
               className={styles.navLink()}
             >
               <span aria-hidden className={styles.navIconGlyph()}>
