@@ -13,6 +13,12 @@ describe("toHealthViewModel", () => {
     ).toEqual({ kind: "error" });
   });
 
+  it("returns an error view when the query settles without data", () => {
+    expect(
+      toHealthViewModel({ isPending: false, isError: false, data: undefined }),
+    ).toEqual({ kind: "error" });
+  });
+
   it("returns a success view with the checked result once data arrives", () => {
     const timestamp = new Date("2026-01-01T12:34:56.000Z");
 

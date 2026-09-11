@@ -21,6 +21,8 @@ export function toHealthViewModel(
     return { kind: "loading" };
   }
 
+  // A settled query with no data has nothing to show, so it reads as a failure
+  // rather than a success view with blank values.
   if (query.isError || !query.data) {
     return { kind: "error" };
   }
