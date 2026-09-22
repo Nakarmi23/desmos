@@ -10,14 +10,16 @@ export const sidebarStyles = tv({
     root: [
       "group flex h-vh shrink-0 flex-col overflow-hidden border-r border-border bg-surface",
       "transition-[width] duration-200 ease-out",
-      "data-[open]:w-60 data-[closed]:w-16",
+      "data-[open]:w-56 data-[closed]:w-14",
     ],
+    // `h-14`/`border-b` match the top bar's own height and bottom border, so
+    // the two headers' bottom edges form one continuous line across the app.
     header: [
-      "flex h-14 items-center px-3",
-      "group-data-[open]:gap-3 group-data-[closed]:justify-center",
+      "flex h-14 items-center border-b border-border px-2.5",
+      "group-data-[open]:gap-2.5 group-data-[closed]:justify-center",
     ],
     brandGlyph:
-      "flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-background-neutral-hovered text-sm font-medium text-text",
+      "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-background-neutral-hovered text-sm font-medium text-text",
     // Unlike the nav labels below, the brand label is a `Collapsible.Panel`,
     // so it carries `data-open` / `data-closed` directly.
     brandLabelPanel: [
@@ -27,42 +29,100 @@ export const sidebarStyles = tv({
     ],
     brandLabelText: "text-sm font-bold text-text w-full truncate",
     brandSubLabelText: "text-xs font-medium text-text-subtle w-full truncate",
-    nav: "flex flex-1 flex-col gap-1 p-2",
+    // `divide-y` draws the line between sections; the padding either side of
+    // it (rather than `gap`) keeps the line itself flush against no extra
+    // margin, so it reads as one crisp divider instead of a doubled-up rule.
+    nav: "flex flex-1 flex-col divide-y divide-border overflow-y-auto p-3 [&>*+*]:pt-2.5 [&>*:not(:last-child)]:pb-2.5",
+    navSection: "flex flex-col gap-px",
+    navSectionLabel:
+      "text-[11px] font-semibold uppercase tracking-wide text-text-subtle",
+    // Plain (non-collapsible) section heading — just the label, padded to
+    // match the collapsible header's row.
+    navSectionStaticLabel: "px-0 pb-0.5 group-data-[closed]:hidden",
+    // Collapsible section heading — a button so the whole row toggles the
+    // section, hidden in the icon rail since there's no room to interact
+    // with it there (items still render, unaffected by the toggle state).
+    navSectionHeader: [
+      "flex w-full items-center justify-between gap-1 px-0 pb-0.5 text-left",
+      "cursor-pointer hover:text-text",
+      "group-data-[closed]:hidden",
+    ],
+    navSectionChevron: [
+      "h-3 w-3 shrink-0 text-text-subtle transition-transform duration-150",
+      "data-[expanded]:rotate-90",
+    ],
     navLink: [
       // `border-transparent` reserves the same space the active state's
       // `border-border-selected` needs, so the row doesn't shift width when
       // it toggles active.
-      "flex items-center rounded-md border border-transparent px-3 py-2 text-text-subtle",
-      "group-data-[open]:gap-3 group-data-[closed]:justify-center",
+      "flex items-center rounded-md border border-transparent px-2.5 py-1.5 text-sm text-text-subtle",
+      "group-data-[open]:gap-2 group-data-[closed]:justify-center",
       "hover:bg-background-neutral-hovered hover:text-text",
       "data-[active]:data-[active]:bg-background-selected data-[active]:text-text-selected",
     ],
     navIconGlyph:
-      "flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-xs font-medium",
+      "flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm text-xs font-medium",
     navLabelText: [
       "overflow-hidden whitespace-nowrap transition-[width,opacity] duration-200 ease-out",
       "group-data-[open]:w-auto group-data-[open]:opacity-100",
       "group-data-[closed]:w-0 group-data-[closed]:opacity-0",
     ],
-    footer: "border-t border-border p-2 group-data-[closed]:flex group-data-[closed]:justify-center",
-    footerRow: "flex items-center gap-2",
-    footerGlyph: "rounded",
-    footerContent: "flex flex-1 items-center gap-2",
+    footer: "border-t border-border p-1",
+    // The trigger for the user menu — the whole row is clickable, not just
+    // the chevron, so it's a `<button>` (via `Menu.Trigger`) rather than the
+    // plain `<div>` it used to be.
+    // No hover/open styling by request — flat until keyboard-focused. A real
+    // `<button>` otherwise falls back to the browser's default blue outline
+    // (which doesn't respect `rounded-md` and lingers after the menu
+    // closes), so `focus-visible` still gets a themed ring — that's a
+    // keyboard-only a11y affordance, not a hover effect, and stays invisible
+    // for mouse/tap use.
+    footerRow: [
+      "flex w-full cursor-pointer items-center rounded-md p-1 text-left outline-none",
+      "group-data-[open]:gap-2 group-data-[closed]:justify-center",
+      "focus-visible:ring-2 focus-visible:ring-border-selected",
+    ],
+    footerGlyph: "h-7 w-7 shrink-0 rounded",
+    // Mirrors `brandLabelPanel`/`navLabelText`: collapses to zero width
+    // (rather than staying `flex-1`, which would keep reserving — and
+    // clipping into — its layout space) so the icon rail is left with just
+    // the centered avatar.
+    footerContent: [
+      "flex min-w-0 items-center gap-2 overflow-hidden",
+      "transition-[width,height,opacity] duration-200 ease-out",
+      "group-data-[open]:w-auto group-data-[open]:h-auto group-data-[open]:flex-1 group-data-[open]:opacity-100",
+      "group-data-[closed]:h-0 group-data-[closed]:w-0 group-data-[closed]:opacity-0",
+    ],
     footerLabelPanel: "flex flex-1 flex-col gap-0.5 overflow-hidden",
     footerLabelText: "text-sm font-bold text-text",
     footerSubLabelText: "text-xs font-medium text-text-subtle",
-    footerTrigger: [
-      "flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md",
-      "hover:bg-background-neutral-hovered hover:text-text",
-    ],
+    // Decorative now — the whole row (`footerRow`) is the actual button, so
+    // this is just the chevron glyph rather than its own nested trigger.
+    footerTrigger:
+      "flex h-6 w-6 shrink-0 items-center justify-center rounded-md",
     footerTriggerIcon: "h-4 w-4 text-text-subtle",
-    // `Collapsible.Trigger` carries `data-panel-open`; its own `group` class
-    // is what `collapseIcon` rotates against.
+    // Lives outside the sidebar's own `Collapsible.Root` (it's rendered in
+    // the top bar), so it's a plain button driven by `useSidebar()` rather
+    // than a Base UI `Collapsible.Trigger`.
     collapseTrigger: [
-      "group flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-text-subtle",
+      "flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-text-subtle",
       "hover:bg-background-neutral-hovered hover:text-text",
     ],
-    collapseIcon:
-      "h-4 w-4 transition-transform duration-200 group-data-[panel-open]:rotate-180",
+    collapseIcon: "h-4 w-4",
+    // The user menu's popup animates in/out from its anchor side using Base
+    // UI's `data-starting-style`/`data-ending-style` (set right as it opens
+    // / right before it's removed) rather than a hand-rolled keyframe.
+    userMenuPopup: [
+      "w-56 rounded-md border border-border bg-surface p-1 shadow-lg outline-none",
+      "transition-[transform,opacity] duration-150 ease-out",
+      "data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
+      "data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
+    ],
+    userMenuItem: [
+      "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-text outline-none",
+      "data-[highlighted]:bg-background-neutral-hovered",
+    ],
+    userMenuItemIcon: "h-4 w-4 shrink-0 text-text-subtle",
+    userMenuSeparator: "my-1 h-px bg-border",
   },
 });
