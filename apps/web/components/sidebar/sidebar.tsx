@@ -9,6 +9,8 @@ import { NAV_ITEMS } from "@/components/nav/nav-items";
 
 import { useSidebar } from "./sidebar-provider";
 import { sidebarStyles } from "./sidebar.styles";
+import Avatar from "boring-avatars";
+import { ChevronsUpDownIcon } from "lucide-react";
 
 const styles = sidebarStyles();
 
@@ -22,14 +24,17 @@ export function Sidebar() {
       onOpenChange={(open) => setCollapsed(!open)}
       render={<aside className={styles.root()} />}
     >
-      <div className={styles.header()}>
+      <header className={styles.header()}>
         <span aria-hidden className={styles.brandGlyph()}>
           D
         </span>
         <Collapsible.Panel className={styles.brandLabelPanel()}>
           <span className={styles.brandLabelText()}>Desmos</span>
+          <span className={styles.brandSubLabelText()}>
+            Dynamic Admin System
+          </span>
         </Collapsible.Panel>
-      </div>
+      </header>
 
       <nav className={styles.nav()}>
         {NAV_ITEMS.map((item) => {
@@ -43,9 +48,9 @@ export function Sidebar() {
               aria-current={active ? "page" : undefined}
               className={styles.navLink()}
             >
-              <span aria-hidden className={styles.navIconGlyph()}>
-                {item.label.charAt(0)}
-              </span>
+              <div aria-hidden className={styles.navIconGlyph()}>
+                {item.icon}
+              </div>
               <span className={styles.navLabelText()}>{item.label}</span>
             </Link>
           );
@@ -53,25 +58,23 @@ export function Sidebar() {
       </nav>
 
       <div className={styles.footer()}>
-        <Collapsible.Trigger className={styles.collapseTrigger()}>
-          <svg
-            aria-hidden
-            viewBox="0 0 16 16"
-            fill="none"
-            className={styles.collapseIcon()}
-          >
-            <path
-              d="M10 3 6 8l4 5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <span className="sr-only">
-            {collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          </span>
-        </Collapsible.Trigger>
+        <div className={styles.footerRow()}>
+          <Avatar
+            name="John Doe"
+            variant="beam"
+            square
+            className={styles.footerGlyph()}
+          />
+          <div className={styles.footerContent()}>
+            <div className={styles.footerLabelPanel()}>
+              <span className={styles.footerLabelText()}>John Doe</span>
+              <span className={styles.footerSubLabelText()}>john.doe</span>
+            </div>
+            <button className={styles.footerTrigger()}>
+              <ChevronsUpDownIcon className={styles.footerTriggerIcon()} />
+            </button>
+          </div>
+        </div>
       </div>
     </Collapsible.Root>
   );

@@ -1,49 +1,100 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens, inspired by Radix Colors (radix-ui.com/colors): a 1-12 step
+ * scale per color, so "step 3 background + step 11 text" is a consistent,
+ * accessible pairing wherever it's used. Light theme only for now - dark is
+ * a planned follow-up (Radix ships a matching dark scale per color, so it's
+ * a case of adding a --slate-dark etc. block, not a redesign). Two layers:
+ *
+ *   1. Raw scale (--slate-*, --accent-*, --danger-*) - literal values from
+ *      @radix-ui/colors 3.0.0 (slate / indigo / red). Named by role rather
+ *      than color so swapping the underlying color later (e.g. indigo ->
+ *      violet) is a one-block edit here, not a find-and-replace.
+ *   2. Semantic aliases (--color-* below, under @theme) - what components
+ *      consume via `bg-surface`, `text-text-subtle`, etc.
+ *
+ * Step usage follows Radix's own guidelines:
+ *   1-2  app / sunken backgrounds      7-8   interactive borders, focus rings
+ *   3-5  UI element bg (default/       9-10  solid backgrounds (buttons,
+ *        hover/active)                       strong accents)
+ *   6    subtle borders, separators    11-12 text (low -> high contrast)
+ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Slate - neutral scale for surfaces, text, and borders */
+  --slate-1: #fcfcfd;
+  --slate-2: #f9f9fb;
+  --slate-3: #f0f0f3;
+  --slate-4: #e8e8ec;
+  --slate-5: #e0e1e6;
+  --slate-6: #d9d9e0;
+  --slate-7: #cdced6;
+  --slate-8: #b9bbc6;
+  --slate-9: #8b8d98;
+  --slate-10: #80838d;
+  --slate-11: #60646c;
+  --slate-12: #1c2024;
+
+  /* Accent (indigo) - brand, selection, and focus states */
+  --accent-1: #fdfdfe;
+  --accent-2: #f7f9ff;
+  --accent-3: #edf2fe;
+  --accent-4: #e1e9ff;
+  --accent-5: #d2deff;
+  --accent-6: #c1d0ff;
+  --accent-7: #abbdf9;
+  --accent-8: #8da4ef;
+  --accent-9: #3e63dd;
+  --accent-10: #3358d4;
+  --accent-11: #3a5bc7;
+  --accent-12: #1f2d5c;
+
+  /* Danger (red) */
+  --danger-1: #fffcfc;
+  --danger-2: #fff7f7;
+  --danger-3: #feebec;
+  --danger-4: #ffdbdc;
+  --danger-5: #ffcdce;
+  --danger-6: #fdbdbe;
+  --danger-7: #f4a9aa;
+  --danger-8: #eb8e90;
+  --danger-9: #e5484d;
+  --danger-10: #dc3e42;
+  --danger-11: #ce2c31;
+  --danger-12: #641723;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono:
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-}
 
-/*
- * Dashboard shell tokens, lifted verbatim from DESIGN.md — the `colors:` YAML,
- * plus the "Neutrals and surfaces" table for the `surface*` values it omits.
- * Exposed via `@theme` so shell components use `bg-surface`,
- * `text-text-subtle`, etc. instead of hardcoded hex values.
- */
-@theme {
-  --color-surface: #ffffff;
-  --color-surface-sunken: #f8f8f8;
-  --color-text: #292a2e;
-  --color-text-subtle: #505258;
-  --color-text-selected: #1868db;
-  --color-border: #0b120e24;
-  --color-border-selected: #1868db;
-  --color-background-neutral-hovered: #0b120e24;
-  --color-background-selected: #e9f2fe;
-  --color-background-selected-hovered: #cfe1fd;
-  --color-icon-danger: #c9372c;
-  --color-border-danger: #e2483d;
-  --color-background-danger: #ffeceb;
-}
+  /* Surfaces */
+  --color-surface: var(--slate-1);
+  --color-surface-sunken: var(--slate-2);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Text */
+  --color-text: var(--slate-12);
+  --color-text-subtle: var(--slate-11);
+  --color-text-selected: var(--accent-11);
+  --color-text-danger: var(--danger-11);
+
+  /* Borders */
+  --color-border: var(--slate-6);
+  --color-border-selected: var(--accent-11);
+  --color-border-danger: var(--danger-9);
+
+  /* Backgrounds */
+  --color-background-neutral-hovered: var(--slate-4);
+  --color-background-selected: var(--accent-3);
+  --color-background-selected-hovered: var(--accent-4);
+  --color-background-danger: var(--danger-3);
+
+  /* Icons */
+  --color-icon-danger: var(--danger-11);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: var(--font-sans);
 }

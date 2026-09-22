@@ -13,35 +13,49 @@ export const sidebarStyles = tv({
       "data-[open]:w-60 data-[closed]:w-16",
     ],
     header: [
-      "flex h-14 items-center border-b border-border px-3",
+      "flex h-14 items-center px-3",
       "group-data-[open]:gap-3 group-data-[closed]:justify-center",
     ],
     brandGlyph:
-      "flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-background-neutral-hovered text-sm font-medium text-text",
+      "flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-background-neutral-hovered text-sm font-medium text-text",
     // Unlike the nav labels below, the brand label is a `Collapsible.Panel`,
     // so it carries `data-open` / `data-closed` directly.
     brandLabelPanel: [
-      "overflow-hidden whitespace-nowrap transition-[width,opacity] duration-200 ease-out",
+      "overflow-hidden whitespace-nowrap transition-[width,opacity] duration-200 ease-out flex flex-col",
       "data-[open]:w-auto data-[open]:opacity-100",
       "data-[closed]:w-0 data-[closed]:opacity-0",
     ],
-    brandLabelText: "text-sm font-medium text-text",
+    brandLabelText: "text-sm font-bold text-text w-full truncate",
+    brandSubLabelText: "text-xs font-medium text-text-subtle w-full truncate",
     nav: "flex flex-1 flex-col gap-1 p-2",
     navLink: [
-      "flex items-center rounded-md px-3 py-2 text-text-subtle",
+      // `border-transparent` reserves the same space the active state's
+      // `border-border-selected` needs, so the row doesn't shift width when
+      // it toggles active.
+      "flex items-center rounded-md border border-transparent px-3 py-2 text-text-subtle",
       "group-data-[open]:gap-3 group-data-[closed]:justify-center",
       "hover:bg-background-neutral-hovered hover:text-text",
-      "data-[active]:border-border-selected data-[active]:bg-background-selected data-[active]:text-text-selected",
-      "data-[active]:hover:bg-background-selected-hovered",
+      "data-[active]:data-[active]:bg-background-selected data-[active]:text-text-selected",
     ],
     navIconGlyph:
-      "flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-background-neutral-hovered text-xs font-medium",
+      "flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-xs font-medium",
     navLabelText: [
       "overflow-hidden whitespace-nowrap transition-[width,opacity] duration-200 ease-out",
       "group-data-[open]:w-auto group-data-[open]:opacity-100",
       "group-data-[closed]:w-0 group-data-[closed]:opacity-0",
     ],
     footer: "border-t border-border p-2 group-data-[closed]:flex group-data-[closed]:justify-center",
+    footerRow: "flex items-center gap-2",
+    footerGlyph: "rounded",
+    footerContent: "flex flex-1 items-center gap-2",
+    footerLabelPanel: "flex flex-1 flex-col gap-0.5 overflow-hidden",
+    footerLabelText: "text-sm font-bold text-text",
+    footerSubLabelText: "text-xs font-medium text-text-subtle",
+    footerTrigger: [
+      "flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md",
+      "hover:bg-background-neutral-hovered hover:text-text",
+    ],
+    footerTriggerIcon: "h-4 w-4 text-text-subtle",
     // `Collapsible.Trigger` carries `data-panel-open`; its own `group` class
     // is what `collapseIcon` rotates against.
     collapseTrigger: [
