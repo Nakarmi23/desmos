@@ -91,6 +91,9 @@
   --color-background-selected-hovered: var(--accent-4);
   --color-background-danger: var(--danger-3);
 
+  /* Overlays - sit above the app, beneath a modal/drawer popup */
+  --color-blanket: rgb(0 0 0 / 45%);
+
   /* Icons */
   --color-icon-danger: var(--danger-11);
 }

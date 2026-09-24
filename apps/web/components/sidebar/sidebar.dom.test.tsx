@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { TopBar } from "@/components/top-bar/top-bar";
+
 import { SidebarProvider } from "./sidebar-provider";
 import { Sidebar } from "./sidebar";
 
@@ -10,11 +12,13 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/overview",
 }));
 
-/** Renders an expanded sidebar; tests collapse it by clicking the trigger. */
+// The collapse toggle lives in `TopBar`, not `Sidebar` itself, so both render
+// together here — matching how the real dashboard layout composes them.
 function renderSidebar() {
   return render(
     <SidebarProvider defaultCollapsed={false}>
       <Sidebar />
+      <TopBar />
     </SidebarProvider>,
   );
 }

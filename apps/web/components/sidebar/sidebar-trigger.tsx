@@ -16,7 +16,7 @@ export function SidebarTrigger() {
       aria-expanded={!collapsed}
       aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       onClick={() => setCollapsed(!collapsed)}
-      className={styles.collapseTrigger()}
+      className={styles.collapseTrigger({ className: "hidden lg:flex" })}
     >
       {collapsed ? (
         <PanelLeftOpen aria-hidden className={styles.collapseIcon()} />

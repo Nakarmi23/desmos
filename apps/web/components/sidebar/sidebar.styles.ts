@@ -7,8 +7,10 @@ import { tv } from "tailwind-variants";
 // JS-computed className.
 export const sidebarStyles = tv({
   slots: {
+    // `hidden lg:flex` is the desktop/mobile split: below `lg` the off-canvas
+    // `MobileSidebarDrawer` takes over instead.
     root: [
-      "group flex h-vh shrink-0 flex-col overflow-hidden border-r border-border bg-surface",
+      "group hidden h-vh shrink-0 flex-col overflow-hidden border-r border-border bg-surface lg:flex",
       "transition-[width] duration-200 ease-out",
       "data-[open]:w-56 data-[closed]:w-14",
     ],
@@ -124,5 +126,33 @@ export const sidebarStyles = tv({
     ],
     userMenuItemIcon: "h-4 w-4 shrink-0 text-text-subtle",
     userMenuSeparator: "my-1 h-px bg-border",
+
+    // The mobile off-canvas drawer (`MobileSidebarDrawer`), driven by Base
+    // UI's `Dialog` rather than `Collapsible`. It reuses `navLink` etc.
+    // as-is, but those rows key their spacing off a `group` ancestor's
+    // `data-open`/`data-closed` (normally the desktop rail's
+    // `Collapsible.Root`) — `drawerNav` supplies its own `group` +
+    // `data-open` so the same rows always render in their "expanded" spacing
+    // here, since the drawer has no rail/icon-only state of its own.
+    drawerBackdrop: [
+      "fixed inset-0 z-40 bg-blanket lg:hidden",
+      "transition-opacity duration-150 ease-out",
+      "data-[starting-style]:opacity-0 data-[ending-style]:opacity-0",
+    ],
+    drawerPopup: [
+      "fixed inset-y-0 left-0 z-40 flex h-vh w-64 flex-col overflow-hidden bg-surface shadow-lg lg:hidden",
+      "transition-transform duration-200 ease-out",
+      "data-[starting-style]:-translate-x-full data-[ending-style]:-translate-x-full",
+    ],
+    drawerHeader:
+      "flex h-14 items-center gap-2.5 border-b border-border px-2.5",
+    drawerBrandLabel: "flex min-w-0 flex-1 flex-col",
+    drawerCloseButton: [
+      "flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-text-subtle",
+      "hover:bg-background-neutral-hovered hover:text-text",
+    ],
+    drawerCloseIcon: "h-4 w-4",
+    drawerNav:
+      "group flex flex-1 flex-col divide-y divide-border overflow-y-auto p-3 [&>*+*]:pt-2.5 [&>*:not(:last-child)]:pb-2.5",
   },
 });

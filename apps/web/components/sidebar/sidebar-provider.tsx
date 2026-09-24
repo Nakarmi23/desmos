@@ -14,6 +14,8 @@ import { serializeSidebarCollapsedCookie } from "./sidebar-cookie";
 interface SidebarContextValue {
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
+  mobileOpen: boolean;
+  setMobileOpen: (open: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
@@ -26,6 +28,9 @@ export function SidebarProvider({
   children: ReactNode;
 }) {
   const [collapsed, setCollapsedState] = useState(defaultCollapsed);
+  // Unlike `collapsed`, the mobile drawer's open state isn't persisted — it
+  // should always start closed on a fresh page load.
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Persisting on every change (rather than in an effect) keeps the cookie
   // untouched for users who never toggle the sidebar.
@@ -47,7 +52,9 @@ export function SidebarProvider({
   }, [collapsed, setCollapsed]);
 
   return (
-    <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
+    <SidebarContext.Provider
+      value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}
+    >
       {children}
     </SidebarContext.Provider>
   );

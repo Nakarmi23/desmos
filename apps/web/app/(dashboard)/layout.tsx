@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 
+import { MobileSidebarDrawer } from "@/components/sidebar/mobile-sidebar-drawer";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import {
   SIDEBAR_COLLAPSED_COOKIE_NAME,
@@ -23,6 +24,7 @@ export default async function DashboardLayout({
     <SidebarProvider defaultCollapsed={defaultCollapsed}>
       <div className="flex min-h-screen">
         <Sidebar />
+        <MobileSidebarDrawer />
         <div className="flex flex-1 flex-col">
           <TopBar />
           <main className="flex-1 bg-surface-sunken p-6">{children}</main>
