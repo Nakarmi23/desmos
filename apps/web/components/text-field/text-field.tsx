@@ -10,9 +10,9 @@ import {
   type Ref,
 } from "react";
 
-import { IconButton } from "../button/button";
-import { Field } from "../field/field";
-import { fieldStyles } from "../field/field.styles";
+import { IconButton } from "@/components/button/button";
+import { Field } from "@/components/field/field";
+import { fieldStyles } from "@/components/field/field.styles";
 
 export type TextFieldProps = Omit<
   ComponentProps<"input">,

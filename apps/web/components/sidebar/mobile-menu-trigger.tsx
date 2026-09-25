@@ -2,7 +2,7 @@
 
 import { MenuIcon } from "lucide-react";
 
-import { IconButton } from "../button/button";
+import { IconButton } from "@/components/button/button";
 import { useSidebar } from "./sidebar-provider";
 
 /** Opens `MobileSidebarDrawer`. Only relevant below `lg`, where the desktop rail is hidden. */

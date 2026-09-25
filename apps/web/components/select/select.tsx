@@ -10,8 +10,8 @@ import {
   type Ref,
 } from "react";
 
-import { Field } from "../field/field";
-import { fieldStyles } from "../field/field.styles";
+import { Field } from "@/components/field/field";
+import { fieldStyles } from "@/components/field/field.styles";
 
 export type SelectOption = {
   value: string;
