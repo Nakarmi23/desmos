@@ -103,10 +103,10 @@ describe("UsersTable", () => {
     await user.click(screen.getByRole("button", { name: "Add filter" }));
     await user.click(
       within(
-        screen.getByRole("group", { name: "Add filter options" }),
+        screen.getByRole("dialog", { name: "Add filter options" }),
       ).getByRole("button", { name: header }),
     );
-    return screen.getByRole("group", { name: `${name} value` });
+    return screen.getByRole("dialog", { name: `${name} value` });
   }
 
   it("narrows by Advanced Search filters, AND-ed with each other and Basic Search", async () => {
@@ -179,7 +179,9 @@ describe("UsersTable", () => {
         { name: /^Role operator/ },
       ),
     );
-    await user.click(screen.getByRole("menuitemradio", { name: "Is none of" }));
+    await user.click(
+      await screen.findByRole("menuitemradio", { name: "Is none of" }),
+    );
     await waitFor(() => {
       const roles = cellsOf(2);
       expect(loadedNames()).toBe(true);
@@ -195,7 +197,9 @@ describe("UsersTable", () => {
         { name: /^Created operator/ },
       ),
     );
-    await user.click(screen.getByRole("menuitemradio", { name: "Before" }));
+    await user.click(
+      await screen.findByRole("menuitemradio", { name: "Before" }),
+    );
     await user.click(
       within(screen.getByRole("group", { name: "Created filter" })).getByRole(
         "button",
@@ -204,7 +208,7 @@ describe("UsersTable", () => {
     );
     await user.type(
       within(
-        screen.getByRole("group", { name: "Created value" }),
+        screen.getByRole("dialog", { name: "Created value" }),
       ).getByLabelText("Created"),
       "2023-12-31",
     );

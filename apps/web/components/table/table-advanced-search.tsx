@@ -1,14 +1,19 @@
+import { Popover } from "@base-ui/react/popover";
 import { PlusIcon } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { defaultFilterValue } from "./filter-operators";
 import type { ResolvedTableColumn } from "./table-column";
 import type { TableColumnFilterValue } from "./table-fetcher";
-import { FILTER_KIND_ICON, TableFilterChip } from "./table-filter-chip";
+import {
+  FILTER_KIND_ICON,
+  POSITIONER,
+  returnFocusOnKeyboard,
+  TableFilterChip,
+} from "./table-filter-chip";
 import { Button } from "@/components/button/button";
 import { TextField } from "@/components/text-field/text-field";
 import { tableStyles } from "./table.styles";
-import { useDismiss } from "./use-dismiss";
 
 export type TableAdvancedSearchProps<T> = {
   /** Only columns with a `filter`. */
@@ -40,18 +45,9 @@ export function TableAdvancedSearch<T>({
   // The chip just created opens straight into its value editor.
   const [justAdded, setJustAdded] = useState<string | null>(null);
   const addButton = useRef<HTMLButtonElement>(null);
-  const searchBox = useRef<HTMLInputElement>(null);
-  const addRoot = useRef<HTMLDivElement>(null);
-  const addDismiss = useDismiss(
-    addRoot,
-    addOpen,
-    () => setAddOpen(false),
-    addButton,
-  );
-
-  useEffect(() => {
-    if (addOpen) searchBox.current?.focus();
-  }, [addOpen]);
+  // Set while "+" closes because a column was picked: that chip opens its own
+  // editor, so focus shouldn't be pulled back to "Add filter" from under it.
+  const adding = useRef(false);
 
   // Removing a chip unmounts the button that had focus; once that has
   // committed, hand focus to "Add filter" so keyboard users aren't dropped.
@@ -75,6 +71,7 @@ export function TableAdvancedSearch<T>({
     if (!column.filter) return;
     onChange(column.id, defaultFilterValue(column.filter.kind));
     setJustAdded(column.id);
+    adding.current = true;
     setAddOpen(false);
   }
 
@@ -82,62 +79,65 @@ export function TableAdvancedSearch<T>({
     <div className={styles.toolbar()}>
       <div className={styles.toolbarRow()}>
         {leading}
-        <div
-          ref={addRoot}
-          {...addDismiss}
-          className={`${styles.chipPart()} ml-auto`}
+        <Popover.Root
+          open={addOpen}
+          onOpenChange={(open) => {
+            if (open) setQuery("");
+            setAddOpen(open);
+          }}
         >
-          <Button
+          <Popover.Trigger
             ref={addButton}
-            size="sm"
-            aria-expanded={addOpen}
             aria-label="Add filter"
-            startIcon={<PlusIcon />}
-            onClick={() => {
-              setQuery("");
-              setAddOpen((open) => !open);
-            }}
+            className="ml-auto"
+            render={<Button size="sm" startIcon={<PlusIcon />} />}
           >
             Filter
-          </Button>
-          {addOpen && (
-            <div
-              role="group"
-              aria-label="Add filter options"
-              className={styles.popupEnd()}
-            >
-              <TextField
-                ref={searchBox}
-                type="search"
-                size="sm"
-                aria-label="Search columns"
-                placeholder="Add filter…"
-                value={query}
-                onValueChange={setQuery}
-                className="mb-1"
-              />
-              {addable.map((column) => {
-                const Icon = column.filter
-                  ? FILTER_KIND_ICON[column.filter.kind]
-                  : null;
-                return (
-                  <button
-                    key={column.id}
-                    type="button"
-                    className={styles.menuItem()}
-                    onClick={() => add(column)}
-                  >
-                    {Icon && <Icon aria-hidden size={14} />}
-                    {column.header}
-                  </button>
-                );
-              })}
-              {addable.length === 0 && (
-                <p className={styles.popupEmpty()}>No matching columns</p>
-              )}
-            </div>
-          )}
-        </div>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Positioner {...POSITIONER} align="end">
+              <Popover.Popup
+                aria-label="Add filter options"
+                finalFocus={(closeType) => {
+                  const returnFocus =
+                    !adding.current && returnFocusOnKeyboard(closeType);
+                  adding.current = false;
+                  return returnFocus;
+                }}
+                className={styles.popup()}
+              >
+                <TextField
+                  type="search"
+                  size="sm"
+                  aria-label="Search columns"
+                  placeholder="Add filter…"
+                  value={query}
+                  onValueChange={setQuery}
+                  className="mb-1"
+                />
+                {addable.map((column) => {
+                  const Icon = column.filter
+                    ? FILTER_KIND_ICON[column.filter.kind]
+                    : null;
+                  return (
+                    <button
+                      key={column.id}
+                      type="button"
+                      className={styles.menuItem()}
+                      onClick={() => add(column)}
+                    >
+                      {Icon && <Icon aria-hidden size={14} />}
+                      {column.header}
+                    </button>
+                  );
+                })}
+                {addable.length === 0 && (
+                  <p className={styles.popupEmpty()}>No matching columns</p>
+                )}
+              </Popover.Popup>
+            </Popover.Positioner>
+          </Popover.Portal>
+        </Popover.Root>
       </div>
 
       {chips.length > 0 && (
