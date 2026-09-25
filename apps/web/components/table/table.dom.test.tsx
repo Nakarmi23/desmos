@@ -1308,7 +1308,7 @@ describe("Table advanced search", () => {
       await addFilter(user, "Name");
       await user.keyboard("{Escape}");
 
-      // Opened from the keyboard, the menu focuses its first operator.
+      // Opened from the keyboard, focus lands on the current operator.
       operatorButton("Name").focus();
       await user.keyboard("{Enter}");
       await expectItemFocused("Contains");
@@ -1330,6 +1330,42 @@ describe("Table advanced search", () => {
       await user.keyboard("{Escape}");
       expect(screen.queryByRole("menu")).not.toBeInTheDocument();
       expect(operatorButton("Name")).toHaveFocus();
+    });
+
+    it("opens the operator menu on the current operator", async () => {
+      const user = userEvent.setup();
+      await renderMembers();
+      await addFilter(user, "Age");
+      await chooseOperator(user, "Age", "Greater than");
+
+      operatorButton("Age").focus();
+      await user.keyboard("{Enter}");
+
+      await expectItemFocused("Greater than");
+    });
+
+    it("focuses the column search when the Add filter list opens", async () => {
+      const user = userEvent.setup();
+      await renderMembers();
+
+      await user.click(addButton());
+
+      await waitFor(() =>
+        expect(
+          within(addMenu()).getByRole("searchbox", { name: "Search columns" }),
+        ).toHaveFocus(),
+      );
+    });
+
+    it("returns focus to the operator button when the current operator is clicked", async () => {
+      const user = userEvent.setup();
+      await renderMembers();
+      await addFilter(user, "Name");
+
+      await chooseOperator(user, "Name", "Contains");
+
+      await waitFor(() => expect(operatorButton("Name")).toHaveFocus());
+      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
     });
 
     it("hands focus back to Add filter after a chip is removed or filters are cleared", async () => {

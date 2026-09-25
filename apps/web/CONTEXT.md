@@ -20,8 +20,8 @@ _Avoid_: quick search, simple search
 
 **Advanced Search**:
 Structured, per-column filters on a Table, shown as a bar of **filter chips** (`Column · operator ·
-value · ×`). A "+" menu (searchable) adds a chip for a filterable column; clicking a chip's operator
-or value edits it in place. The operator is suited to the column's data type (text: contains / equals
+value · ×`). A "+" button opens a searchable list of the filterable columns; picking one adds its
+chip; clicking a chip's operator or value edits it in place. The operator is suited to the column's data type (text: contains / equals
 / starts with / ends with; number: equals, does not equal, less/greater than (or equal), between;
 date: between / is / before / after (and on or before/after); select: is any of / is none of). One
 chip per column; "Clear filters" removes them all. Combines with Basic Search as AND-ed constraints —

@@ -1,15 +1,13 @@
 import { Menu } from "@base-ui/react/menu";
 import { Popover } from "@base-ui/react/popover";
-import {
-  CalendarIcon,
-  CheckIcon,
-  HashIcon,
-  ListIcon,
-  TypeIcon,
-  XIcon,
-} from "lucide-react";
+import { CheckIcon, XIcon } from "lucide-react";
 import { useRef } from "react";
 
+import {
+  FILTER_KIND_ICON,
+  FILTER_POPUP_POSITION,
+  returnFocusOnKeyboard,
+} from "./filter-popup";
 import {
   defaultFilterValue,
   FILTER_OPERATORS,
@@ -28,30 +26,6 @@ import type {
 import { Checkbox } from "@/components/checkbox/checkbox";
 import { TextField } from "@/components/text-field/text-field";
 import { tableStyles } from "./table.styles";
-
-export const FILTER_KIND_ICON = {
-  text: TypeIcon,
-  number: HashIcon,
-  date: CalendarIcon,
-  select: ListIcon,
-} as const;
-
-/** Where chip and "+" popups sit: just below their trigger, kept on-screen. */
-export const POSITIONER = {
-  side: "bottom",
-  align: "start",
-  sideOffset: 6,
-  collisionPadding: 8,
-  className: "z-20",
-} as const;
-
-/**
- * Closing from the keyboard (Escape) hands focus back to the trigger; a click
- * elsewhere leaves it where the click put it, so it can't steal focus from a
- * popup that click just opened.
- */
-export const returnFocusOnKeyboard = (closeType: string) =>
-  closeType === "keyboard";
 
 export type TableFilterChipProps<T> = {
   column: ResolvedTableColumn<T>;
@@ -78,6 +52,7 @@ export function TableFilterChip<T>({
   // Set when an operator is picked, so focus goes back to the trigger however
   // it was picked (a click on an item, or Enter).
   const chose = useRef(false);
+  const operatorMenu = useRef<HTMLDivElement>(null);
   const filter = column.filter;
   if (!filter) return null;
 
@@ -103,7 +78,15 @@ export function TableFilterChip<T>({
         {column.header}
       </span>
 
-      <Menu.Root>
+      <Menu.Root
+        // Land on the operator in use, so it's one key from its neighbours.
+        onOpenChangeComplete={(open) => {
+          if (!open) return;
+          operatorMenu.current
+            ?.querySelector<HTMLElement>('[aria-checked="true"]')
+            ?.focus();
+        }}
+      >
         <Menu.Trigger
           aria-label={`${column.header} operator: ${operatorLabel}`}
           className={styles.chipSegment()}
@@ -112,9 +95,10 @@ export function TableFilterChip<T>({
           {operatorLabel.toLowerCase()}
         </Menu.Trigger>
         <Menu.Portal>
-          <Menu.Positioner {...POSITIONER}>
+          <Menu.Positioner {...FILTER_POPUP_POSITION}>
             {/* Named by its trigger ("<Column> operator: <current>"). */}
             <Menu.Popup
+              ref={operatorMenu}
               finalFocus={(closeType) => {
                 const returnFocus =
                   chose.current || returnFocusOnKeyboard(closeType);
@@ -158,7 +142,7 @@ export function TableFilterChip<T>({
           {valueText}
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Positioner {...POSITIONER}>
+          <Popover.Positioner {...FILTER_POPUP_POSITION}>
             <Popover.Popup
               aria-label={`${column.header} value`}
               finalFocus={returnFocusOnKeyboard}
