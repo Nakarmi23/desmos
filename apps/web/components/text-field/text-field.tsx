@@ -2,8 +2,6 @@
 
 import { Loader2Icon, XIcon } from "lucide-react";
 import {
-  useRef,
-  useState,
   type ChangeEvent,
   type ComponentProps,
   type ReactNode,
@@ -13,6 +11,7 @@ import {
 import { IconButton } from "@/components/button/button";
 import { Field } from "@/components/field/field";
 import { fieldStyles } from "@/components/field/field.styles";
+import { useFieldControl } from "@/components/field/use-field-control";
 
 export type TextFieldProps = Omit<
   ComponentProps<"input">,
@@ -84,19 +83,11 @@ export function TextField({
 }: TextFieldProps) {
   const styles = fieldStyles({ size });
 
-  const localRef = useRef<HTMLInputElement | null>(null);
-  const [inner, setInner] = useState(defaultValue);
-  const controlled = value !== undefined;
-  const current = controlled ? value : inner;
-
-  function setRefs(node: HTMLInputElement | null) {
-    localRef.current = node;
-    if (typeof ref === "function") ref(node);
-    else if (ref) ref.current = node;
-  }
+  const { localRef, setRefs, current, setValue } =
+    useFieldControl<HTMLInputElement>({ ref, value, defaultValue });
 
   function update(next: string) {
-    if (!controlled) setInner(next);
+    setValue(next);
     onValueChange?.(next);
   }
 
