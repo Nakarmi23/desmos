@@ -8,23 +8,20 @@ export const tableStyles = tv({
     chip: "inline-flex h-8 items-stretch rounded-md border border-border bg-surface text-sm text-text",
     chipColumn:
       "inline-flex items-center gap-1.5 rounded-l-md border-r border-border px-2 py-1",
-    // Below `lg` a chip's popup anchors to the toolbar instead, spanning it, so
-    // a chip near the right edge can't push its popup off-screen.
-    chipPart: "relative flex max-lg:static",
     chipSegment:
       "border-r border-border px-2 py-1 hover:bg-background-neutral-hovered focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-border-selected data-[muted]:text-text-subtle",
     chipRemove:
       "inline-flex items-center rounded-r-md px-1.5 text-text-subtle hover:bg-background-neutral-hovered hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-border-selected",
+    // Placed by Base UI's positioner, which keeps them on-screen; capped to the
+    // room it reports so they never run wider than the viewport.
     popup:
-      "absolute top-full left-0 z-20 max-lg:inset-x-2 mt-1.5 flex min-w-56 flex-col gap-0.5 rounded-lg border border-border bg-surface p-1.5 text-sm text-text shadow-lg",
-    popupEnd:
-      "absolute top-full right-0 z-20 max-lg:right-2 mt-1.5 flex min-w-56 flex-col gap-0.5 rounded-lg border border-border bg-surface p-1.5 text-sm text-text shadow-lg",
+      "flex max-w-(--available-width) min-w-56 flex-col gap-0.5 rounded-lg border border-border bg-surface p-1.5 text-sm text-text shadow-lg outline-none",
     popupBody:
-      "absolute top-full left-0 z-20 max-lg:inset-x-2 mt-1.5 flex min-w-60 flex-col gap-2.5 rounded-lg border border-border bg-surface p-3 text-sm text-text shadow-lg",
+      "flex max-w-(--available-width) min-w-60 flex-col gap-2.5 rounded-lg border border-border bg-surface p-3 text-sm text-text shadow-lg outline-none",
     popupEmpty: "px-2.5 py-1.5 text-text-subtle",
     menuItem:
-      "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left hover:bg-background-neutral-hovered focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-border-selected",
-    toolbar: "relative flex flex-col gap-2 border-b border-border p-2",
+      "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left outline-none hover:bg-background-neutral-hovered data-[highlighted]:bg-background-neutral-hovered focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-border-selected",
+    toolbar: "flex flex-col gap-2 border-b border-border p-2",
     toolbarRow: "flex flex-wrap items-center gap-2",
     root: "min-h-0 flex-1 overflow-auto first:rounded-t-lg",
     // Below `lg`: natural column widths, and `root` scrolls sideways.

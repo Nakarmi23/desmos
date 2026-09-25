@@ -742,17 +742,17 @@ describe("Table advanced search", () => {
 
   const addButton = () => screen.getByRole("button", { name: "Add filter" });
   const addMenu = () =>
-    screen.getByRole("group", { name: "Add filter options" });
+    screen.getByRole("dialog", { name: "Add filter options" });
   const queryAddMenu = () =>
-    screen.queryByRole("group", { name: "Add filter options" });
+    screen.queryByRole("dialog", { name: "Add filter options" });
   const chip = (header: string) =>
     screen.getByRole("group", { name: `${header} filter` });
   const queryChip = (header: string) =>
     screen.queryByRole("group", { name: `${header} filter` });
   const editor = (header: string) =>
-    screen.getByRole("group", { name: `${header} value` });
+    screen.getByRole("dialog", { name: `${header} value` });
   const queryEditor = (header: string) =>
-    screen.queryByRole("group", { name: `${header} value` });
+    screen.queryByRole("dialog", { name: `${header} value` });
   const operatorButton = (header: string) =>
     within(chip(header)).getByRole("button", {
       name: new RegExp(`^${header} operator`),
@@ -771,9 +771,24 @@ describe("Table advanced search", () => {
     return editor(header);
   }
 
-  async function chooseOperator(user: User, header: string, label: string) {
+  /** Base UI opens a menu a frame after the press, so wait for it. */
+  async function openOperatorMenu(user: User, header: string) {
     await user.click(operatorButton(header));
-    await user.click(screen.getByRole("menuitemradio", { name: label }));
+    return screen.findByRole("menu", {
+      name: new RegExp(`^${header} operator`),
+    });
+  }
+
+  /** Base UI moves menu focus a frame after the key, so wait for it. */
+  function expectItemFocused(name: string) {
+    return waitFor(() =>
+      expect(screen.getByRole("menuitemradio", { name })).toHaveFocus(),
+    );
+  }
+
+  async function chooseOperator(user: User, header: string, label: string) {
+    const menu = await openOperatorMenu(user, header);
+    await user.click(within(menu).getByRole("menuitemradio", { name: label }));
   }
 
   function expectLastFilters(fetcher: jest.Mock, filters: object, page = 1) {
@@ -888,7 +903,7 @@ describe("Table advanced search", () => {
       await renderMembers();
 
       await addFilter(user, "Name");
-      await user.click(operatorButton("Name"));
+      await openOperatorMenu(user, "Name");
       expect(operatorLabels()).toEqual([
         "Contains",
         "Equals",
@@ -901,7 +916,7 @@ describe("Table advanced search", () => {
       await user.keyboard("{Escape}");
 
       await addFilter(user, "Age");
-      await user.click(operatorButton("Age"));
+      await openOperatorMenu(user, "Age");
       expect(operatorLabels()).toEqual([
         "Equals",
         "Does not equal",
@@ -914,7 +929,7 @@ describe("Table advanced search", () => {
       await user.keyboard("{Escape}");
 
       await addFilter(user, "Joined");
-      await user.click(operatorButton("Joined"));
+      await openOperatorMenu(user, "Joined");
       expect(operatorLabels()).toEqual([
         "Between",
         "Is",
@@ -926,7 +941,7 @@ describe("Table advanced search", () => {
       await user.keyboard("{Escape}");
 
       await addFilter(user, "Role");
-      await user.click(operatorButton("Role"));
+      await openOperatorMenu(user, "Role");
       expect(operatorLabels()).toEqual(["Is any of", "Is none of"]);
     });
 
@@ -1293,34 +1308,25 @@ describe("Table advanced search", () => {
       await addFilter(user, "Name");
       await user.keyboard("{Escape}");
 
-      await user.click(operatorButton("Name"));
-      // The current operator has focus.
-      expect(
-        screen.getByRole("menuitemradio", { name: "Contains" }),
-      ).toHaveFocus();
+      // Opened from the keyboard, the menu focuses its first operator.
+      operatorButton("Name").focus();
+      await user.keyboard("{Enter}");
+      await expectItemFocused("Contains");
 
       await user.keyboard("{ArrowDown}");
-      expect(
-        screen.getByRole("menuitemradio", { name: "Equals" }),
-      ).toHaveFocus();
+      await expectItemFocused("Equals");
       await user.keyboard("{End}");
-      expect(
-        screen.getByRole("menuitemradio", { name: "Ends with" }),
-      ).toHaveFocus();
+      await expectItemFocused("Ends with");
       await user.keyboard("{ArrowDown}"); // wraps
-      expect(
-        screen.getByRole("menuitemradio", { name: "Contains" }),
-      ).toHaveFocus();
+      await expectItemFocused("Contains");
       await user.keyboard("{ArrowUp}");
-      expect(
-        screen.getByRole("menuitemradio", { name: "Ends with" }),
-      ).toHaveFocus();
+      await expectItemFocused("Ends with");
 
       await user.keyboard("{Enter}");
       expect(operatorButton("Name")).toHaveTextContent("ends with");
       expect(operatorButton("Name")).toHaveFocus();
 
-      await user.click(operatorButton("Name"));
+      await openOperatorMenu(user, "Name");
       await user.keyboard("{Escape}");
       expect(screen.queryByRole("menu")).not.toBeInTheDocument();
       expect(operatorButton("Name")).toHaveFocus();
@@ -1692,11 +1698,11 @@ describe("Table row selection", () => {
     await user.click(screen.getByRole("button", { name: "Add filter" }));
     await user.click(
       within(
-        screen.getByRole("group", { name: "Add filter options" }),
+        screen.getByRole("dialog", { name: "Add filter options" }),
       ).getByRole("button", { name: /^Name/ }),
     );
     await user.type(
-      within(screen.getByRole("group", { name: "Name value" })).getByRole(
+      within(screen.getByRole("dialog", { name: "Name value" })).getByRole(
         "textbox",
       ),
       "Person",

@@ -1,3 +1,5 @@
+import { Menu } from "@base-ui/react/menu";
+import { Popover } from "@base-ui/react/popover";
 import {
   CalendarIcon,
   CheckIcon,
@@ -6,7 +8,7 @@ import {
   TypeIcon,
   XIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useRef } from "react";
 
 import {
   defaultFilterValue,
@@ -19,11 +21,13 @@ import type {
   TableColumnFilterKind,
   TableFilterOption,
 } from "./table-column";
-import type { TableColumnFilterValue } from "./table-fetcher";
+import type {
+  TableColumnFilterValue,
+  TableFilterOperator,
+} from "./table-fetcher";
 import { Checkbox } from "@/components/checkbox/checkbox";
 import { TextField } from "@/components/text-field/text-field";
 import { tableStyles } from "./table.styles";
-import { useDismiss } from "./use-dismiss";
 
 export const FILTER_KIND_ICON = {
   text: TypeIcon,
@@ -31,6 +35,23 @@ export const FILTER_KIND_ICON = {
   date: CalendarIcon,
   select: ListIcon,
 } as const;
+
+/** Where chip and "+" popups sit: just below their trigger, kept on-screen. */
+export const POSITIONER = {
+  side: "bottom",
+  align: "start",
+  sideOffset: 6,
+  collisionPadding: 8,
+  className: "z-20",
+} as const;
+
+/**
+ * Closing from the keyboard (Escape) hands focus back to the trigger; a click
+ * elsewhere leaves it where the click put it, so it can't steal focus from a
+ * popup that click just opened.
+ */
+export const returnFocusOnKeyboard = (closeType: string) =>
+  closeType === "keyboard";
 
 export type TableFilterChipProps<T> = {
   column: ResolvedTableColumn<T>;
@@ -54,46 +75,12 @@ export function TableFilterChip<T>({
   onRemove,
 }: TableFilterChipProps<T>) {
   const styles = tableStyles();
+  // Set when an operator is picked, so focus goes back to the trigger however
+  // it was picked (a click on an item, or Enter).
+  const chose = useRef(false);
   const filter = column.filter;
-  const [operatorOpen, setOperatorOpen] = useState(false);
-  const [valueOpen, setValueOpen] = useState(defaultOpen);
-  const operatorButton = useRef<HTMLButtonElement>(null);
-  const valueButton = useRef<HTMLButtonElement>(null);
-  const operatorRoot = useRef<HTMLDivElement>(null);
-  const valueRoot = useRef<HTMLDivElement>(null);
-  const operatorDismiss = useDismiss(
-    operatorRoot,
-    operatorOpen,
-    () => setOperatorOpen(false),
-    operatorButton,
-  );
-  const valueDismiss = useDismiss(
-    valueRoot,
-    valueOpen,
-    () => setValueOpen(false),
-    valueButton,
-  );
-  const operatorPopup = useRef<HTMLDivElement>(null);
-  const valuePopup = useRef<HTMLDivElement>(null);
-
-  // Land keyboard users inside whichever popup just opened.
-  useEffect(() => {
-    if (operatorOpen) {
-      const items =
-        operatorPopup.current?.querySelectorAll<HTMLElement>("button");
-      const checked = operatorPopup.current?.querySelector<HTMLElement>(
-        '[aria-checked="true"]',
-      );
-      (checked ?? items?.[0])?.focus();
-    }
-  }, [operatorOpen]);
-  useEffect(() => {
-    if (valueOpen) {
-      valuePopup.current?.querySelector<HTMLElement>("input, button")?.focus();
-    }
-  }, [valueOpen]);
-
   if (!filter) return null;
+
   const kind = filter.kind;
   const options = filter.kind === "select" ? filter.options : [];
   const current = value ?? defaultFilterValue(kind);
@@ -116,89 +103,78 @@ export function TableFilterChip<T>({
         {column.header}
       </span>
 
-      <div
-        ref={operatorRoot}
-        {...operatorDismiss}
-        className={styles.chipPart()}
-      >
-        <button
-          ref={operatorButton}
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={operatorOpen}
+      <Menu.Root>
+        <Menu.Trigger
           aria-label={`${column.header} operator: ${operatorLabel}`}
           className={styles.chipSegment()}
           data-muted=""
-          onClick={() => {
-            setValueOpen(false);
-            setOperatorOpen((open) => !open);
-          }}
         >
           {operatorLabel.toLowerCase()}
-        </button>
-        {operatorOpen && (
-          <div
-            ref={operatorPopup}
-            role="menu"
-            aria-label={`${column.header} operator`}
-            className={styles.popup()}
-            onKeyDown={moveMenuFocus}
-          >
-            {FILTER_OPERATORS[kind].map((option) => (
-              <button
-                key={option.operator}
-                type="button"
-                role="menuitemradio"
-                aria-checked={option.operator === current.operator}
-                className={styles.menuItem()}
-                onClick={() => {
-                  onChange(withOperator(current, option.operator));
-                  setOperatorOpen(false);
-                  operatorButton.current?.focus();
+        </Menu.Trigger>
+        <Menu.Portal>
+          <Menu.Positioner {...POSITIONER}>
+            {/* Named by its trigger ("<Column> operator: <current>"). */}
+            <Menu.Popup
+              finalFocus={(closeType) => {
+                const returnFocus =
+                  chose.current || returnFocusOnKeyboard(closeType);
+                chose.current = false;
+                return returnFocus;
+              }}
+              className={styles.popup()}
+            >
+              <Menu.RadioGroup
+                value={current.operator}
+                onValueChange={(operator: TableFilterOperator) => {
+                  chose.current = true;
+                  onChange(withOperator(current, operator));
                 }}
               >
-                {option.label}
-                {option.operator === current.operator && (
-                  <CheckIcon aria-hidden size={14} className="ml-auto" />
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+                {FILTER_OPERATORS[kind].map((option) => (
+                  <Menu.RadioItem
+                    key={option.operator}
+                    value={option.operator}
+                    closeOnClick
+                    className={styles.menuItem()}
+                  >
+                    {option.label}
+                    <Menu.RadioItemIndicator className="ml-auto">
+                      <CheckIcon aria-hidden size={14} />
+                    </Menu.RadioItemIndicator>
+                  </Menu.RadioItem>
+                ))}
+              </Menu.RadioGroup>
+            </Menu.Popup>
+          </Menu.Positioner>
+        </Menu.Portal>
+      </Menu.Root>
 
-      <div ref={valueRoot} {...valueDismiss} className={styles.chipPart()}>
-        <button
-          ref={valueButton}
-          type="button"
-          aria-expanded={valueOpen}
+      <Popover.Root defaultOpen={defaultOpen}>
+        <Popover.Trigger
           aria-label={`${column.header} value: ${valueText}`}
           className={styles.chipSegment()}
           data-muted={summary ? undefined : ""}
-          onClick={() => {
-            setOperatorOpen(false);
-            setValueOpen((open) => !open);
-          }}
         >
           {valueText}
-        </button>
-        {valueOpen && (
-          <div
-            ref={valuePopup}
-            role="group"
-            aria-label={`${column.header} value`}
-            className={styles.popupBody()}
-          >
-            <ValueControls
-              header={column.header}
-              kind={kind}
-              options={options}
-              current={current}
-              onChange={onChange}
-            />
-          </div>
-        )}
-      </div>
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Positioner {...POSITIONER}>
+            <Popover.Popup
+              aria-label={`${column.header} value`}
+              finalFocus={returnFocusOnKeyboard}
+              className={styles.popupBody()}
+            >
+              <ValueControls
+                header={column.header}
+                kind={kind}
+                options={options}
+                current={current}
+                onChange={onChange}
+              />
+            </Popover.Popup>
+          </Popover.Positioner>
+        </Popover.Portal>
+      </Popover.Root>
 
       <button
         type="button"
@@ -210,23 +186,6 @@ export function TableFilterChip<T>({
       </button>
     </div>
   );
-}
-
-/** Arrow/Home/End roving focus between a menu's items, wrapping at the ends. */
-function moveMenuFocus(event: KeyboardEvent<HTMLElement>) {
-  const items = Array.from(
-    event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitemradio"]'),
-  );
-  const at = items.indexOf(document.activeElement as HTMLElement);
-  const target = {
-    ArrowDown: (at + 1) % items.length,
-    ArrowUp: (at - 1 + items.length) % items.length,
-    Home: 0,
-    End: items.length - 1,
-  }[event.key];
-  if (target === undefined) return;
-  event.preventDefault();
-  items[target]?.focus();
 }
 
 const INPUT_TYPE = { text: "text", number: "number", date: "date" } as const;
