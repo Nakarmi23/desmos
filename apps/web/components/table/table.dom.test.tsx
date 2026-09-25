@@ -7,9 +7,24 @@ import { Table } from "./table";
 
 type Row = { id: string; name: string; age: number };
 
+// Plain columns: no sorting, Basic Search or Advanced Search.
+const PLAIN = { sortable: false, searchable: false, filter: false } as const;
+
 const columns: TableColumn<Row>[] = [
-  { id: "name", header: "Name", type: "text", accessor: (r) => r.name },
-  { id: "age", header: "Age", type: "number", accessor: (r) => r.age },
+  {
+    id: "name",
+    header: "Name",
+    type: "text",
+    accessor: (r) => r.name,
+    ...PLAIN,
+  },
+  {
+    id: "age",
+    header: "Age",
+    type: "number",
+    accessor: (r) => r.age,
+    ...PLAIN,
+  },
 ];
 
 const rows: Row[] = [
@@ -183,6 +198,10 @@ describe("Table", () => {
     expect(await screen.findByText("No results found")).toBeInTheDocument();
     expect(screen.getByRole("grid")).toHaveAttribute("aria-busy", "false");
     expect(screen.queryByRole("gridcell")).not.toBeInTheDocument();
+    // Nothing to clear when no search or filter is applied.
+    expect(
+      screen.queryByRole("button", { name: /^Clear/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows an error state when the fetcher rejects, and Retry refetches", async () => {
@@ -378,14 +397,15 @@ describe("Table sorting", () => {
       header: "Name",
       type: "text",
       accessor: (r) => r.name,
-      sortable: true,
+      searchable: false,
+      filter: false,
     },
     {
       id: "age",
       header: "Age",
       type: "number",
       accessor: (r) => r.age,
-      sortable: true,
+      filter: false,
     },
     { id: "note", header: "Note", type: "text", render: () => "-" },
   ];
@@ -402,6 +422,23 @@ describe("Table sorting", () => {
   }
 
   const header = (name: string) => screen.getByRole("columnheader", { name });
+
+  it("starts on the configured default sort", async () => {
+    const fetcher = pagedFetcher();
+    render(
+      <Table
+        columns={sortableColumns}
+        fetcher={fetcher}
+        getRowId={(r) => r.id}
+        {...SMALL_PAGES}
+        defaultSort={{ columnId: "age", direction: "desc" }}
+      />,
+    );
+
+    await expectLastSort(fetcher, "age", "desc");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(header("Age")).toHaveAttribute("aria-sort", "descending");
+  });
 
   it("sorts ascending on first click, toggles to descending on the second", async () => {
     const user = userEvent.setup();
@@ -1122,6 +1159,87 @@ describe("Table advanced search", () => {
     });
   });
 
+  describe("empty state", () => {
+    // Nothing matches once any search or filter applies.
+    function noMatchFetcher() {
+      return jest.fn<
+        ReturnType<TableFetcher<Member>>,
+        Parameters<TableFetcher<Member>>
+      >(async (page, pageSize, _sort, filters) =>
+        filters.search || filters.columns
+          ? { rows: [], total: 0 }
+          : {
+              rows: members.slice((page - 1) * pageSize, page * pageSize),
+              total: members.length,
+            },
+      );
+    }
+
+    const emptyState = () =>
+      screen.findByText("No results found").then((text) => text.parentElement!);
+
+    it("offers Clear filters when Advanced Search filters leave no rows", async () => {
+      const user = userEvent.setup();
+      const fetcher = await renderMembers(noMatchFetcher());
+
+      await user.type(
+        within(await addFilter(user, "Name")).getByRole("textbox", {
+          name: "Name",
+        }),
+        "zzz",
+      );
+      await user.keyboard("{Escape}");
+      await user.click(
+        within(await emptyState()).getByRole("button", {
+          name: "Clear filters",
+        }),
+      );
+
+      await expectLastFilters(fetcher, {});
+      expect(await screen.findByText("Member 1")).toBeInTheDocument();
+      expect(queryChip("Name")).not.toBeInTheDocument();
+    });
+
+    it("offers Clear search when only Basic Search leaves no rows", async () => {
+      const user = userEvent.setup();
+      const fetcher = await renderMembers(noMatchFetcher());
+      const search = screen.getByRole("searchbox", { name: "Search" });
+
+      await user.type(search, "zzz");
+      await user.click(
+        within(await emptyState()).getByRole("button", {
+          name: "Clear search",
+        }),
+      );
+
+      await expectLastFilters(fetcher, {});
+      expect(search).toHaveValue("");
+    });
+
+    it("offers Clear search and filters when both are applied", async () => {
+      const user = userEvent.setup();
+      const fetcher = await renderMembers(noMatchFetcher());
+
+      await user.type(
+        within(await addFilter(user, "Name")).getByRole("textbox", {
+          name: "Name",
+        }),
+        "zzz",
+      );
+      await user.keyboard("{Escape}");
+      await user.type(screen.getByRole("searchbox", { name: "Search" }), "q");
+      await user.click(
+        within(await emptyState()).getByRole("button", {
+          name: "Clear search and filters",
+        }),
+      );
+
+      await expectLastFilters(fetcher, {});
+      expect(screen.getByRole("searchbox", { name: "Search" })).toHaveValue("");
+      expect(queryChip("Name")).not.toBeInTheDocument();
+    });
+  });
+
   it("combines with Basic Search: both apply at once, on page 1", async () => {
     const user = userEvent.setup();
     const fetcher = await renderMembers();
@@ -1557,7 +1675,9 @@ describe("Table row selection", () => {
     await user.click(rowCheckboxes()[0]);
     await user.type(screen.getByRole("searchbox", { name: "Search" }), "x");
 
-    await waitFor(() => expect(toolbar()).not.toBeInTheDocument());
+    // Right away, not once typing settles: a Bulk Action can't be aimed at
+    // rows the pending search is about to replace.
+    expect(toolbar()).not.toBeInTheDocument();
   });
 
   it("clears the selection when Advanced Search filters change", async () => {

@@ -18,7 +18,11 @@ import {
   type KeyboardEvent,
 } from "react";
 
-import { resolveColumnAlign, type TableColumn } from "./table-column";
+import {
+  resolveColumn,
+  type ResolvedTableColumn,
+  type TableColumn,
+} from "./table-column";
 import type { TableFetcher, TableSort } from "./table-fetcher";
 import { TableAdvancedSearch } from "./table-advanced-search";
 import { TablePagination } from "./table-pagination";
@@ -28,9 +32,9 @@ import {
   DEFAULT_PAGE_SIZE_OPTIONS,
   type TableView,
 } from "./table-view";
-import { Button } from "../button/button";
-import { Checkbox } from "../checkbox/checkbox";
-import { TextField } from "../text-field/text-field";
+import { Button } from "@/components/button/button";
+import { Checkbox } from "@/components/checkbox/checkbox";
+import { TextField } from "@/components/text-field/text-field";
 import { tableStyles } from "./table.styles";
 
 /**
@@ -51,6 +55,8 @@ export type TableProps<T extends RowData> = {
   defaultPageSize?: number;
   /** Choices in the rows-per-page selector. Defaults to 25 / 50 / 100. */
   pageSizeOptions?: readonly number[];
+  /** Sort on first render, when `initialView` doesn't give one. Defaults to none. */
+  defaultSort?: TableSort;
   /** Adds a checkbox column; a toolbar with these actions shows while rows are selected. */
   bulkActions?: readonly TableBulkAction[];
   /**
@@ -87,7 +93,7 @@ const EMPTY_SELECTION: ReadonlySet<string> = new Set();
 const SELECT_COLUMN_ID = "_select";
 
 /** Selected row ids, tagged with the view they were picked in. */
-type Selection = { viewKey: string; ids: ReadonlySet<string> };
+type Selection = { key: string; ids: ReadonlySet<string> };
 
 /** Row 0 is the header row; data rows start at 1 (matches `aria-rowindex`). */
 type GridPosition = { row: number; col: number };
@@ -102,6 +108,7 @@ export function Table<T extends RowData>({
   defaultPageSize = DEFAULT_PAGE_SIZE,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   bulkActions,
+  defaultSort = null,
   initialView,
   onViewChange,
 }: TableProps<T>) {
@@ -115,24 +122,26 @@ export function Table<T extends RowData>({
     viewKey: "",
   });
   const [selection, setSelection] = useState<Selection>({
-    viewKey: "",
+    key: "",
     ids: EMPTY_SELECTION,
   });
   const gridRef = useRef<HTMLTableElement>(null);
   const styles = tableStyles();
 
+  // Every default a column leaves out, filled in from its `type`.
+  const resolved = useMemo(() => columns.map(resolveColumn), [columns]);
   const hasBulkActions = bulkActions !== undefined && bulkActions.length > 0;
   const columnDefs = useMemo(
-    () => toColumnDefs(columns, hasBulkActions),
-    [columns, hasBulkActions],
+    () => toColumnDefs(resolved, hasBulkActions),
+    [resolved, hasBulkActions],
   );
   const alignById = useMemo(
-    () => new Map(columns.map((c) => [c.id, resolveColumnAlign(c)])),
-    [columns],
+    () => new Map(resolved.map((c) => [c.id, c.align])),
+    [resolved],
   );
   const widthById = useMemo(
-    () => new Map(columns.map((c) => [c.id, c.width])),
-    [columns],
+    () => new Map(resolved.map((c) => [c.id, c.width])),
+    [resolved],
   );
 
   const rows =
@@ -157,14 +166,7 @@ export function Table<T extends RowData>({
             ? initialView.pageSize
             : defaultPageSize,
       },
-      sorting: initialView?.sort
-        ? [
-            {
-              id: initialView.sort.columnId,
-              desc: initialView.sort.direction === "desc",
-            },
-          ]
-        : [],
+      sorting: toSorting(initialView ? initialView.sort : defaultSort),
     },
   });
   const { pageIndex, pageSize } = table.state.pagination;
@@ -172,12 +174,14 @@ export function Table<T extends RowData>({
   // Basic Search + Advanced Search; a committed change goes back to page 1.
   const {
     draft,
+    draftVersion,
     filters,
     filtersKey,
     setSearch,
     setColumnFilter,
     removeColumnFilter,
     clearColumnFilters,
+    clearAll,
   } = useTableFilters(() => table.setPageIndex(0), initialView?.filters);
 
   const sortColumnId = table.state.sorting[0]?.id;
@@ -199,13 +203,15 @@ export function Table<T extends RowData>({
   const pastEndTo =
     outcome?.status === "pastEnd" ? outcome.lastPageIndex : null;
 
-  // Selection belongs to the view it was made in: when the view changes, drop it
+  // Selection belongs to the view it was made in: when the view changes — or
+  // the search/filter controls do, before that change even settles — drop it
   // right away (a derived check would revive it on returning to the same view).
-  if (selection.viewKey !== viewKey) {
-    setSelection({ viewKey, ids: EMPTY_SELECTION });
+  const selectionKey = `${viewKey}#${draftVersion}`;
+  if (selection.key !== selectionKey) {
+    setSelection({ key: selectionKey, ids: EMPTY_SELECTION });
   }
   const selected =
-    selection.viewKey === viewKey ? selection.ids : EMPTY_SELECTION;
+    selection.key === selectionKey ? selection.ids : EMPTY_SELECTION;
   const dataRows = state.status === "success" ? table.getRowModel().rows : [];
   const pageCount = table.getPageCount();
   // Last page is usually short; mirror it so the skeleton doesn't overshoot.
@@ -234,23 +240,32 @@ export function Table<T extends RowData>({
     onFocus: () => setActive({ row, col, viewKey }),
   });
 
-  const searchableHeaders = columns
+  const searchableHeaders = resolved
     .filter((column) => column.searchable)
     .map((column) => column.header.toLowerCase())
     .join(", ");
   const hasSearch = searchableHeaders !== "";
-  const filterableColumns = columns.filter((column) => column.filter);
+  // Names what the empty state's button would clear; null when nothing applies.
+  const clearLabel =
+    filters.search && filters.columns
+      ? "Clear search and filters"
+      : filters.search
+        ? "Clear search"
+        : filters.columns
+          ? "Clear filters"
+          : null;
+  const filterableColumns = resolved.filter((column) => column.filter);
   const hasAdvancedSearch = filterableColumns.length > 0;
 
   function toggleRow(id: string) {
     const ids = new Set(selected);
     if (!ids.delete(id)) ids.add(id);
-    setSelection({ viewKey, ids });
+    setSelection({ key: selectionKey, ids });
   }
 
   function toggleAll() {
     setSelection({
-      viewKey,
+      key: selectionKey,
       ids: allSelected ? EMPTY_SELECTION : new Set(pageIds),
     });
   }
@@ -530,7 +545,14 @@ export function Table<T extends RowData>({
           </tbody>
         </table>
         {state.status === "success" && dataRows.length === 0 && (
-          <div className={styles.message()}>No results found</div>
+          <div className={styles.message()}>
+            <p>No results found</p>
+            {clearLabel && (
+              <Button size="sm" onClick={clearAll}>
+                {clearLabel}
+              </Button>
+            )}
+          </div>
         )}
         {state.status === "error" && (
           <div role="alert" className={styles.message()}>
@@ -557,6 +579,10 @@ export function Table<T extends RowData>({
       )}
     </div>
   );
+}
+
+function toSorting(sort: TableSort) {
+  return sort ? [{ id: sort.columnId, desc: sort.direction === "desc" }] : [];
 }
 
 function ariaSort<T extends RowData>(
@@ -588,24 +614,25 @@ function SortIndicator<T extends RowData>({
 }
 
 function toColumnDefs<T extends RowData>(
-  columns: readonly TableColumn<T>[],
+  columns: readonly ResolvedTableColumn<T>[],
   withSelectColumn: boolean,
 ): ColumnDef<typeof features, T>[] {
-  const defs: ColumnDef<typeof features, T>[] = columns.map((column) =>
-    column.render
+  const defs: ColumnDef<typeof features, T>[] = columns.map((column) => {
+    const render = column.render;
+    return render
       ? {
           id: column.id,
           header: column.header,
-          cell: ({ row }) => column.render(row.original),
+          cell: ({ row }) => render(row.original),
         }
       : {
           id: column.id,
           header: column.header,
           accessorFn: column.accessor,
-          enableSorting: column.sortable === true,
+          enableSorting: column.sortable,
           cell: ({ getValue }) => formatValue(getValue()),
-        },
-  );
+        };
+  });
   if (!withSelectColumn) return defs;
   // Placeholder: the checkbox itself is drawn by the Table, which owns the state.
   return [

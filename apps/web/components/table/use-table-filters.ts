@@ -21,6 +21,8 @@ export function useTableFilters(
     search: initial.search ?? "",
     columns: initial.columns ?? {},
   }));
+  // Bumped on every edit, so callers can react before the edit settles.
+  const [draftVersion, setDraftVersion] = useState(0);
   const [committed, setCommitted] = useState(() => {
     const filters = normalizeFilters(draft);
     return { filters, key: JSON.stringify(filters) };
@@ -40,6 +42,7 @@ export function useTableFilters(
     const next = change(draftRef.current);
     draftRef.current = next;
     setDraft(next);
+    setDraftVersion((version) => version + 1);
 
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
@@ -55,6 +58,7 @@ export function useTableFilters(
 
   return {
     draft,
+    draftVersion,
     filters: committed.filters,
     filtersKey: committed.key,
     setSearch: (search: string) => update((d) => ({ ...d, search })),
@@ -69,5 +73,7 @@ export function useTableFilters(
       }),
     /** Drops every column filter; Basic Search is left alone. */
     clearColumnFilters: () => update((d) => ({ ...d, columns: {} })),
+    /** Drops Basic Search and every column filter. */
+    clearAll: () => update(() => ({ search: "", columns: {} })),
   };
 }

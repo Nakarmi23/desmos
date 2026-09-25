@@ -1,5 +1,10 @@
 import { isBlank } from "./normalize-filters";
-import type { TableColumn, TableColumnFilterKind } from "./table-column";
+import {
+  resolveColumn,
+  type ResolvedTableColumn,
+  type TableColumn,
+  type TableColumnFilterKind,
+} from "./table-column";
 import type {
   TableColumnFilterValue,
   TableFetcherResult,
@@ -20,9 +25,10 @@ export function windowFixture<T>(
   sort: TableSort,
   filters: TableFilters,
 ): TableFetcherResult<T> {
-  const searched = applySearch(rows, columns, filters.search);
-  const filtered = applyColumnFilters(searched, columns, filters.columns);
-  const sorted = applySort(filtered, columns, sort);
+  const resolved = columns.map(resolveColumn);
+  const searched = applySearch(rows, resolved, filters.search);
+  const filtered = applyColumnFilters(searched, resolved, filters.columns);
+  const sorted = applySort(filtered, resolved, sort);
   const start = (page - 1) * pageSize;
 
   return { rows: sorted.slice(start, start + pageSize), total: sorted.length };
@@ -30,7 +36,7 @@ export function windowFixture<T>(
 
 function applySearch<T>(
   rows: readonly T[],
-  columns: readonly TableColumn<T>[],
+  columns: readonly ResolvedTableColumn<T>[],
   search: string | undefined,
 ): T[] {
   if (!search) return [...rows];
@@ -49,7 +55,7 @@ function applySearch<T>(
 
 function applyColumnFilters<T>(
   rows: T[],
-  columns: readonly TableColumn<T>[],
+  columns: readonly ResolvedTableColumn<T>[],
   filters: Record<string, TableColumnFilterValue> | undefined,
 ): T[] {
   if (!filters) return rows;
@@ -196,7 +202,7 @@ function compare(a: number | string, b: number | string): number {
 
 function applySort<T>(
   rows: readonly T[],
-  columns: readonly TableColumn<T>[],
+  columns: readonly ResolvedTableColumn<T>[],
   sort: TableSort,
 ): T[] {
   if (!sort) return [...rows];

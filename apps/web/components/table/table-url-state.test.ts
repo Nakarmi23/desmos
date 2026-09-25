@@ -31,6 +31,7 @@ const columns: TableColumn<Row>[] = [
     header: "Role",
     type: "text",
     accessor: (r) => r.role,
+    sortable: false,
     filter: {
       kind: "select",
       options: [{ value: "admin" }, { value: "member" }],
@@ -236,5 +237,35 @@ describe("table URL state", () => {
     );
     // The input is left as it was.
     expect(current.get("q")).toBe("old");
+  });
+
+  describe("with a default sort", () => {
+    const sorted = {
+      ...config,
+      defaultSort: { columnId: "age", direction: "desc" } as const,
+    };
+
+    it("leaves the default sort out of the URL, and reads it back when absent", () => {
+      const view: TableView = { ...DEFAULT_VIEW, sort: sorted.defaultSort };
+      expect(encodeTableView(view, sorted).toString()).toBe("");
+      expect(decodeTableView(new URLSearchParams(""), sorted)).toEqual(view);
+    });
+
+    it("still writes any other sort", () => {
+      const view: TableView = {
+        ...DEFAULT_VIEW,
+        sort: { columnId: "age", direction: "asc" },
+      };
+      expect(encodeTableView(view, sorted).toString()).toBe("sort=age");
+      expect(decodeTableView(new URLSearchParams("sort=age"), sorted)).toEqual(
+        view,
+      );
+    });
+
+    it("falls back to the default sort for one it can't use", () => {
+      expect(
+        decodeTableView(new URLSearchParams("sort=nope"), sorted).sort,
+      ).toEqual(sorted.defaultSort);
+    });
   });
 });

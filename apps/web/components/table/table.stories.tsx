@@ -36,6 +36,38 @@ export const Loading: Story = { args: { fetcher: pending } };
 export const Empty: Story = { args: { fetcher: empty } };
 export const FetchError: Story = { args: { fetcher: failing } };
 
+// Opens with a search + filter applied, so the empty state offers to clear them.
+export const EmptyWithFilters: Story = {
+  args: {
+    fetcher: empty,
+    initialView: {
+      page: 1,
+      pageSize: 25,
+      sort: null,
+      filters: {
+        search: "nobody",
+        columns: { role: { operator: "in", values: ["admin"] } },
+      },
+    },
+  },
+};
+
+// Opens mid-way through a sorted, filtered view (as a shared URL would).
+export const PresetView: Story = {
+  args: {
+    initialView: {
+      page: 2,
+      pageSize: 25,
+      sort: { columnId: "createdAt", direction: "desc" },
+      filters: { columns: { status: { operator: "in", values: ["active"] } } },
+    },
+  },
+};
+
+export const DefaultSort: Story = {
+  args: { defaultSort: { columnId: "name", direction: "asc" } },
+};
+
 export const Mobile: Story = {
   args: WithBulkActions.args,
   globals: { viewport: "mobile2" },

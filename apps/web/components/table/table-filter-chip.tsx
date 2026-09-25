@@ -15,13 +15,13 @@ import {
   withOperator,
 } from "./filter-operators";
 import type {
-  TableColumn,
+  ResolvedTableColumn,
   TableColumnFilterKind,
   TableFilterOption,
 } from "./table-column";
 import type { TableColumnFilterValue } from "./table-fetcher";
-import { Checkbox } from "../checkbox/checkbox";
-import { TextField } from "../text-field/text-field";
+import { Checkbox } from "@/components/checkbox/checkbox";
+import { TextField } from "@/components/text-field/text-field";
 import { tableStyles } from "./table.styles";
 import { useDismiss } from "./use-dismiss";
 
@@ -33,7 +33,7 @@ export const FILTER_KIND_ICON = {
 } as const;
 
 export type TableFilterChipProps<T> = {
-  column: TableColumn<T>;
+  column: ResolvedTableColumn<T>;
   value: TableColumnFilterValue | undefined;
   /** Open the value editor on mount (a chip that was just added). */
   defaultOpen: boolean;
