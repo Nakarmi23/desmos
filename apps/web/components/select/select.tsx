@@ -2,8 +2,6 @@
 
 import { ChevronDownIcon } from "lucide-react";
 import {
-  useRef,
-  useState,
   type ChangeEvent,
   type ComponentProps,
   type ReactNode,
@@ -12,6 +10,7 @@ import {
 
 import { Field } from "@/components/field/field";
 import { fieldStyles } from "@/components/field/field.styles";
+import { useFieldControl } from "@/components/field/use-field-control";
 
 export type SelectOption = {
   value: string;
@@ -75,22 +74,18 @@ export function Select({
   ...selectProps
 }: SelectProps) {
   const styles = fieldStyles({ size });
-  const localRef = useRef<HTMLSelectElement | null>(null);
-  const [inner, setInner] = useState(
-    defaultValue ??
-      (placeholder !== undefined ? "" : (options[0]?.value ?? "")),
-  );
-  const controlled = value !== undefined;
-  const current = controlled ? value : inner;
-
-  function setRefs(node: HTMLSelectElement | null) {
-    localRef.current = node;
-    if (typeof ref === "function") ref(node);
-    else if (ref) ref.current = node;
-  }
+  const { localRef, setRefs, current, setValue } =
+    useFieldControl<HTMLSelectElement>({
+      ref,
+      value,
+      // Like a native select: first option, unless a placeholder shows.
+      defaultValue:
+        defaultValue ??
+        (placeholder !== undefined ? "" : (options[0]?.value ?? "")),
+    });
 
   function handleChange(e: ChangeEvent<HTMLSelectElement>) {
-    if (!controlled) setInner(e.target.value);
+    setValue(e.target.value);
     onValueChange?.(e.target.value);
     onChange?.(e);
   }
