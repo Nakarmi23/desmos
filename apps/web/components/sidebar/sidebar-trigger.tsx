@@ -2,7 +2,7 @@
 
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
-import { IconButton } from "../button/button";
+import { IconButton } from "@/components/button/button";
 import { useSidebar } from "./sidebar-provider";
 
 export function SidebarTrigger() {
