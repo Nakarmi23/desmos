@@ -22,12 +22,14 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider defaultCollapsed={defaultCollapsed}>
-      <div className="flex min-h-screen">
+      <div className="flex h-screen">
         <Sidebar />
         <MobileSidebarDrawer />
-        <div className="flex flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col">
           <TopBar />
-          <main className="flex-1 bg-surface-sunken p-6">{children}</main>
+          <main className="flex min-h-0 flex-1 flex-col overflow-auto bg-surface-sunken p-6">
+            {children}
+          </main>
         </div>
       </div>
     </SidebarProvider>

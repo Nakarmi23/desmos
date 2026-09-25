@@ -16,7 +16,7 @@ module.exports = {
     "^.+\\.[tj]sx?$": tsJestTransformCfg["^.+\\.tsx?$"],
   },
   transformIgnorePatterns: [
-    "node_modules/\\.pnpm/(?!(superjson|copy-anything|boring-avatars)@)",
+    "node_modules/\\.pnpm/(?!(superjson|copy-anything|boring-avatars|@tanstack\\+[^@/]+)@)",
   ],
   // The default `test` suite must never depend on a running database, so it
   // skips any `*.integration.test.ts` file. Those run via `test:integration`

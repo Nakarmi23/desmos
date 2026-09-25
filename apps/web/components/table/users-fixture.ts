@@ -11,7 +11,7 @@ export type User = {
   createdAt: Date;
 };
 
-export const USERS: User[] = [
+const HAND_WRITTEN_USERS: User[] = [
   {
     id: "usr_001",
     name: "Ava Thompson",
@@ -204,4 +204,117 @@ export const USERS: User[] = [
     status: "active",
     createdAt: new Date("2024-05-22T15:30:00Z"),
   },
+];
+
+const FIRST_NAMES = [
+  "Zoe",
+  "Mateo",
+  "Layla",
+  "Kai",
+  "Nora",
+  "Felix",
+  "Iris",
+  "Omar",
+  "Ruby",
+  "Hugo",
+  "Yara",
+  "Theo",
+  "Lena",
+  "Diego",
+  "Maya",
+  "Arjun",
+  "Clara",
+  "Jonas",
+  "Aisha",
+  "Leo",
+] as const;
+
+const LAST_NAMES = [
+  "Alvarez",
+  "Bennett",
+  "Carvalho",
+  "Dahl",
+  "Eriksen",
+  "Fontaine",
+  "Grant",
+  "Haddad",
+  "Ivanov",
+  "Jensen",
+  "Kowalski",
+  "Lopez",
+  "Moreau",
+  "Nakamura",
+  "Oliveira",
+  "Petrov",
+  "Quinn",
+  "Reyes",
+  "Silva",
+  "Tanaka",
+] as const;
+
+// Repeating patterns keep the spread (mostly members, mostly active) stable across edits.
+const ROLE_PATTERN: UserRole[] = [
+  "member",
+  "viewer",
+  "member",
+  "member",
+  "viewer",
+  "member",
+  "admin",
+  "viewer",
+  "member",
+  "member",
+];
+const STATUS_PATTERN: UserStatus[] = [
+  "active",
+  "active",
+  "active",
+  "invited",
+  "active",
+  "active",
+  "suspended",
+  "active",
+  "active",
+  "invited",
+];
+
+const TOTAL_USERS = 200;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const FIRST_GENERATED_AT = Date.parse("2024-06-01T10:00:00Z");
+
+// Deterministic (no randomness), so tests and stories see the same rows every run.
+function generateUsers(count: number, taken: ReadonlySet<string>): User[] {
+  const users: User[] = [];
+  const emails = new Set(taken);
+  for (let i = 0; users.length < count; i++) {
+    const first = FIRST_NAMES[(i * 7) % FIRST_NAMES.length];
+    const last =
+      LAST_NAMES[
+        (i * 3 + Math.floor(i / FIRST_NAMES.length)) % LAST_NAMES.length
+      ];
+    const email = `${first}.${last}@example.com`.toLowerCase();
+    if (emails.has(email)) continue;
+    emails.add(email);
+
+    const n = users.length;
+    users.push({
+      id: `usr_${String(HAND_WRITTEN_USERS.length + n + 1).padStart(3, "0")}`,
+      name: `${first} ${last}`,
+      email,
+      role: ROLE_PATTERN[n % ROLE_PATTERN.length],
+      status: STATUS_PATTERN[(n * 3) % STATUS_PATTERN.length],
+      createdAt: new Date(
+        FIRST_GENERATED_AT + n * 2 * DAY_MS + (n % 7) * 3_600_000,
+      ),
+    });
+  }
+  return users;
+}
+
+export const USERS: User[] = [
+  ...HAND_WRITTEN_USERS,
+  ...generateUsers(
+    TOTAL_USERS - HAND_WRITTEN_USERS.length,
+    new Set(HAND_WRITTEN_USERS.map((user) => user.email)),
+  ),
 ];

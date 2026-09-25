@@ -1,5 +1,7 @@
-import type { TableColumn } from "./table-column";
+import { isBlank } from "./normalize-filters";
+import type { TableColumn, TableColumnFilterKind } from "./table-column";
 import type {
+  TableColumnFilterValue,
   TableFetcherResult,
   TableFilters,
   TableSort,
@@ -18,7 +20,8 @@ export function windowFixture<T>(
   sort: TableSort,
   filters: TableFilters,
 ): TableFetcherResult<T> {
-  const filtered = applySearch(rows, columns, filters.search);
+  const searched = applySearch(rows, columns, filters.search);
+  const filtered = applyColumnFilters(searched, columns, filters.columns);
   const sorted = applySort(filtered, columns, sort);
   const start = (page - 1) * pageSize;
 
@@ -42,6 +45,153 @@ function applySearch<T>(
         .includes(needle),
     ),
   );
+}
+
+function applyColumnFilters<T>(
+  rows: T[],
+  columns: readonly TableColumn<T>[],
+  filters: Record<string, TableColumnFilterValue> | undefined,
+): T[] {
+  if (!filters) return rows;
+
+  const active = columns.flatMap((column) => {
+    const value = filters[column.id];
+    if (!column.accessor || !column.filter || value === undefined) return [];
+    return [{ accessor: column.accessor, kind: column.filter.kind, value }];
+  });
+
+  return rows.filter((row) =>
+    active.every(({ accessor, kind, value }) =>
+      matchesFilter(kind, accessor(row), value),
+    ),
+  );
+}
+
+// Blank filter values mean "no constraint"; a blank/unparseable *cell* never
+// matches a comparison (like SQL NULL — not even `neq`).
+function matchesFilter(
+  kind: TableColumnFilterKind,
+  cell: unknown,
+  filter: TableColumnFilterValue,
+): boolean {
+  switch (filter.operator) {
+    case "in":
+    case "notIn": {
+      if (filter.values.length === 0) return true;
+      return (
+        filter.values.includes(String(cell)) === (filter.operator === "in")
+      );
+    }
+    case "between":
+      return matchesRange(kind, cell, filter.from, filter.to);
+    case "contains":
+    case "startsWith":
+    case "endsWith":
+      return (
+        isBlank(filter.value) ||
+        matchesSubstring(cell, filter.operator, String(filter.value))
+      );
+    default:
+      return (
+        isBlank(filter.value) ||
+        matchesComparison(kind, cell, filter.operator, filter.value)
+      );
+  }
+}
+
+function matchesSubstring(
+  cell: unknown,
+  operator: "contains" | "startsWith" | "endsWith",
+  needle: string,
+): boolean {
+  const haystack = String(cell ?? "").toLowerCase();
+  const target = needle.toLowerCase();
+  switch (operator) {
+    case "contains":
+      return haystack.includes(target);
+    case "startsWith":
+      return haystack.startsWith(target);
+    case "endsWith":
+      return haystack.endsWith(target);
+  }
+}
+
+function matchesComparison(
+  kind: TableColumnFilterKind,
+  cell: unknown,
+  operator: "eq" | "neq" | "lt" | "lte" | "gt" | "gte",
+  target: string | number,
+): boolean {
+  const bound = comparable(kind, target);
+  if (bound === undefined) return true; // unparseable filter value: no constraint
+  const value = comparable(kind, cell);
+  if (value === undefined) return false;
+
+  const order = compare(value, bound);
+  switch (operator) {
+    case "eq":
+      return order === 0;
+    case "neq":
+      return order !== 0;
+    case "lt":
+      return order < 0;
+    case "lte":
+      return order <= 0;
+    case "gt":
+      return order > 0;
+    case "gte":
+      return order >= 0;
+  }
+}
+
+function matchesRange(
+  kind: TableColumnFilterKind,
+  cell: unknown,
+  from: string | number | undefined,
+  to: string | number | undefined,
+): boolean {
+  const lower = comparable(kind, from);
+  const upper = comparable(kind, to);
+  if (lower === undefined && upper === undefined) return true;
+
+  const value = comparable(kind, cell);
+  if (value === undefined) return false;
+  return (
+    (lower === undefined || compare(value, lower) >= 0) &&
+    (upper === undefined || compare(value, upper) <= 0)
+  );
+}
+
+// Numbers compare as numbers, dates as UTC `YYYY-MM-DD` days (so a whole day
+// counts as one value, whatever time of day the cell holds), text lowercased.
+// `undefined` = missing or unparseable.
+function comparable(
+  kind: TableColumnFilterKind,
+  value: unknown,
+): number | string | undefined {
+  if (isBlank(value)) return undefined;
+
+  if (kind === "number") {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : undefined;
+  }
+  if (kind === "date") {
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime())
+        ? undefined
+        : value.toISOString().slice(0, 10);
+    }
+    const day =
+      typeof value === "string" ? /^\d{4}-\d{2}-\d{2}/.exec(value) : null;
+    return day?.[0];
+  }
+  return String(value).toLowerCase();
+}
+
+function compare(a: number | string, b: number | string): number {
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  const [x, y] = [String(a), String(b)];
+  return x < y ? -1 : x > y ? 1 : 0;
 }
 
 function applySort<T>(

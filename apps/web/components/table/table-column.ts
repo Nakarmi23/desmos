@@ -12,8 +12,19 @@ export type TableColumnBase = {
   width?: number | string;
 };
 
+export type TableFilterOption = { value: string; label?: string };
+
+/** Which Advanced Search control a column gets. */
+export type TableColumnFilter =
+  | { kind: "text" }
+  | { kind: "number" }
+  | { kind: "date" }
+  | { kind: "select"; options: readonly TableFilterOption[] };
+
+export type TableColumnFilterKind = TableColumnFilter["kind"];
+
 /**
- * `sortable`/`searchable` require `accessor` — sorting and searching need a
+ * `sortable`/`searchable`/`filter` require `accessor` — sorting, searching and filtering need a
  * primitive value to compare, which a `render`-only column doesn't provide.
  */
 export type TableColumn<T> = TableColumnBase &
@@ -23,12 +34,14 @@ export type TableColumn<T> = TableColumnBase &
         render?: never;
         sortable?: boolean;
         searchable?: boolean;
+        filter?: TableColumnFilter;
       }
     | {
         render: (row: T) => ReactNode;
         accessor?: never;
         sortable?: never;
         searchable?: never;
+        filter?: never;
       }
   );
 

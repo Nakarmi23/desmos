@@ -2,27 +2,20 @@
 
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
+import { IconButton } from "../button/button";
 import { useSidebar } from "./sidebar-provider";
-import { sidebarStyles } from "./sidebar.styles";
-
-const styles = sidebarStyles();
 
 export function SidebarTrigger() {
   const { collapsed, setCollapsed } = useSidebar();
 
   return (
-    <button
-      type="button"
+    <IconButton
       aria-expanded={!collapsed}
-      aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       onClick={() => setCollapsed(!collapsed)}
-      className={styles.collapseTrigger({ className: "hidden lg:flex" })}
+      className="hidden lg:flex"
     >
-      {collapsed ? (
-        <PanelLeftOpen aria-hidden className={styles.collapseIcon()} />
-      ) : (
-        <PanelLeftClose aria-hidden className={styles.collapseIcon()} />
-      )}
-    </button>
+      {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+    </IconButton>
   );
 }

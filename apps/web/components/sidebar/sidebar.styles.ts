@@ -103,14 +103,6 @@ export const sidebarStyles = tv({
     footerTrigger:
       "flex h-6 w-6 shrink-0 items-center justify-center rounded-md",
     footerTriggerIcon: "h-4 w-4 text-text-subtle",
-    // Lives outside the sidebar's own `Collapsible.Root` (it's rendered in
-    // the top bar), so it's a plain button driven by `useSidebar()` rather
-    // than a Base UI `Collapsible.Trigger`.
-    collapseTrigger: [
-      "flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-text-subtle",
-      "hover:bg-background-neutral-hovered hover:text-text",
-    ],
-    collapseIcon: "h-4 w-4",
     // The user menu's popup animates in/out from its anchor side using Base
     // UI's `data-starting-style`/`data-ending-style` (set right as it opens
     // / right before it's removed) rather than a hand-rolled keyframe.
@@ -147,11 +139,6 @@ export const sidebarStyles = tv({
     drawerHeader:
       "flex h-14 items-center gap-2.5 border-b border-border px-2.5",
     drawerBrandLabel: "flex min-w-0 flex-1 flex-col",
-    drawerCloseButton: [
-      "flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-text-subtle",
-      "hover:bg-background-neutral-hovered hover:text-text",
-    ],
-    drawerCloseIcon: "h-4 w-4",
     drawerNav:
       "group flex flex-1 flex-col divide-y divide-border overflow-y-auto p-3 [&>*+*]:pt-2.5 [&>*:not(:last-child)]:pb-2.5",
   },

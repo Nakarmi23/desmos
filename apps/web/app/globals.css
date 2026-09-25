@@ -90,6 +90,14 @@
   --color-background-selected: var(--accent-3);
   --color-background-selected-hovered: var(--accent-4);
   --color-background-danger: var(--danger-3);
+  --color-background-brand: var(--accent-9);
+  --color-background-brand-hovered: var(--accent-10);
+  --color-background-danger-bold: var(--danger-9);
+  --color-background-danger-bold-hovered: var(--danger-10);
+  --color-background-danger-hovered: var(--danger-4);
+
+  /* Text on solid brand / danger backgrounds */
+  --color-text-inverse: #fff;
 
   /* Overlays - sit above the app, beneath a modal/drawer popup */
   --color-blanket: rgb(0 0 0 / 45%);
