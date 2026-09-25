@@ -7,10 +7,10 @@ import type { ResolvedTableColumn } from "./table-column";
 import type { TableColumnFilterValue } from "./table-fetcher";
 import {
   FILTER_KIND_ICON,
-  POSITIONER,
+  FILTER_POPUP_POSITION,
   returnFocusOnKeyboard,
-  TableFilterChip,
-} from "./table-filter-chip";
+} from "./filter-popup";
+import { TableFilterChip } from "./table-filter-chip";
 import { Button } from "@/components/button/button";
 import { TextField } from "@/components/text-field/text-field";
 import { tableStyles } from "./table.styles";
@@ -95,7 +95,7 @@ export function TableAdvancedSearch<T>({
             Filter
           </Popover.Trigger>
           <Popover.Portal>
-            <Popover.Positioner {...POSITIONER} align="end">
+            <Popover.Positioner {...FILTER_POPUP_POSITION} align="end">
               <Popover.Popup
                 aria-label="Add filter options"
                 finalFocus={(closeType) => {
