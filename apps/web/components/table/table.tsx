@@ -55,7 +55,10 @@ export type TableProps<T extends RowData> = {
   defaultPageSize?: number;
   /** Choices in the rows-per-page selector. Defaults to 25 / 50 / 100. */
   pageSizeOptions?: readonly number[];
-  /** Sort on first render, when `initialView` doesn't give one. Defaults to none. */
+  /**
+   * Sort on first render. Defaults to none. With `initialView`, its `sort`
+   * wins — give the URL codec the same `defaultSort` so it fills that in.
+   */
   defaultSort?: TableSort;
   /** Adds a checkbox column; a toolbar with these actions shows while rows are selected. */
   bulkActions?: readonly TableBulkAction[];
