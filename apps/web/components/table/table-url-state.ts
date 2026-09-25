@@ -1,6 +1,11 @@
 import { FILTER_OPERATORS } from "./filter-operators";
 import { normalizeFilters } from "./normalize-filters";
-import type { TableColumn, TableColumnFilterKind } from "./table-column";
+import {
+  resolveColumn,
+  type ResolvedTableColumn,
+  type TableColumn,
+  type TableColumnFilterKind,
+} from "./table-column";
 import type {
   TableColumnFilterValue,
   TableFilterOperator,
@@ -11,6 +16,8 @@ import type { TableView } from "./table-view";
 export type TableUrlConfig<T> = {
   columns: readonly TableColumn<T>[];
   defaultPageSize: number;
+  /** The Table's `defaultSort`: what an absent `sort` param means. */
+  defaultSort?: TableSort;
   pageSizeOptions: readonly number[];
 };
 
@@ -29,7 +36,7 @@ export function encodeTableView<T>(
   if (view.pageSize !== config.defaultPageSize) {
     params.set("size", String(view.pageSize));
   }
-  if (view.sort) {
+  if (view.sort && !sameSort(view.sort, config.defaultSort ?? null)) {
     const { columnId, direction } = view.sort;
     params.set("sort", direction === "desc" ? `-${columnId}` : columnId);
   }
@@ -75,6 +82,7 @@ export function decodeTableView<T>(
   params: URLSearchParams,
   config: TableUrlConfig<T>,
 ): TableView {
+  const resolved = config.columns.map(resolveColumn);
   const page = parsePositiveInt(params.get("page")) ?? 1;
   const size = parsePositiveInt(params.get("size"));
   return {
@@ -83,10 +91,11 @@ export function decodeTableView<T>(
       size !== undefined && config.pageSizeOptions.includes(size)
         ? size
         : config.defaultPageSize,
-    sort: decodeSort(params.get("sort"), config.columns),
+    sort:
+      decodeSort(params.get("sort"), resolved) ?? config.defaultSort ?? null,
     filters: normalizeFilters({
       search: params.get("q") ?? "",
-      columns: decodeColumnFilters(params, config.columns),
+      columns: decodeColumnFilters(params, resolved),
     }),
   };
 }
@@ -99,7 +108,7 @@ function parsePositiveInt(raw: string | null): number | undefined {
 
 function decodeSort<T>(
   raw: string | null,
-  columns: readonly TableColumn<T>[],
+  columns: readonly ResolvedTableColumn<T>[],
 ): TableSort {
   if (!raw) return null;
   const desc = raw.startsWith("-");
@@ -110,7 +119,7 @@ function decodeSort<T>(
 
 function decodeColumnFilters<T>(
   params: URLSearchParams,
-  columns: readonly TableColumn<T>[],
+  columns: readonly ResolvedTableColumn<T>[],
 ): Record<string, TableColumnFilterValue> {
   const filters: Record<string, TableColumnFilterValue> = {};
   for (const [key, raw] of params) {
@@ -170,4 +179,8 @@ function parseScalar(
   if (kind === "date")
     return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : undefined;
   return text;
+}
+
+function sameSort(a: TableSort, b: TableSort): boolean {
+  return a?.columnId === b?.columnId && a?.direction === b?.direction;
 }

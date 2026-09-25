@@ -1,5 +1,5 @@
-import { Button } from "../button/button";
-import { Select } from "../select/select";
+import { Button } from "@/components/button/button";
+import { Select } from "@/components/select/select";
 import { getPaginationItems } from "./pagination-items";
 import { tableStyles } from "./table.styles";
 

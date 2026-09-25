@@ -2,17 +2,17 @@ import { PlusIcon } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { defaultFilterValue } from "./filter-operators";
-import type { TableColumn } from "./table-column";
+import type { ResolvedTableColumn } from "./table-column";
 import type { TableColumnFilterValue } from "./table-fetcher";
 import { FILTER_KIND_ICON, TableFilterChip } from "./table-filter-chip";
-import { Button } from "../button/button";
-import { TextField } from "../text-field/text-field";
+import { Button } from "@/components/button/button";
+import { TextField } from "@/components/text-field/text-field";
 import { tableStyles } from "./table.styles";
 import { useDismiss } from "./use-dismiss";
 
 export type TableAdvancedSearchProps<T> = {
-  /** Only columns that declare a `filter`. */
-  columns: readonly TableColumn<T>[];
+  /** Only columns with a `filter`. */
+  columns: readonly ResolvedTableColumn<T>[];
   /** Columns present here have a chip, active or not. */
   values: Record<string, TableColumnFilterValue>;
   onChange: (columnId: string, value: TableColumnFilterValue) => void;
@@ -62,7 +62,8 @@ export function TableAdvancedSearch<T>({
     addButton.current?.focus();
   });
 
-  const hasChip = (column: TableColumn<T>) => Object.hasOwn(values, column.id);
+  const hasChip = (column: ResolvedTableColumn<T>) =>
+    Object.hasOwn(values, column.id);
   const chips = columns.filter(hasChip);
   const addable = columns
     .filter((column) => !hasChip(column))
@@ -70,7 +71,7 @@ export function TableAdvancedSearch<T>({
       column.header.toLowerCase().includes(query.trim().toLowerCase()),
     );
 
-  function add(column: TableColumn<T>) {
+  function add(column: ResolvedTableColumn<T>) {
     if (!column.filter) return;
     onChange(column.id, defaultFilterValue(column.filter.kind));
     setJustAdded(column.id);

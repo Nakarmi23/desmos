@@ -32,48 +32,34 @@ const toOptions = (labels: Record<string, string>): TableFilterOption[] =>
 const ROLE_OPTIONS = toOptions(ROLE_LABELS);
 const STATUS_OPTIONS = toOptions(STATUS_LABELS);
 
+// Sorting, Basic Search (text columns) and Advanced Search all come from `type`.
 export const USER_COLUMNS: TableColumn<User>[] = [
-  {
-    id: "name",
-    header: "Name",
-    type: "text",
-    accessor: (user) => user.name,
-    sortable: true,
-    searchable: true,
-    filter: { kind: "text" },
-  },
+  { id: "name", header: "Name", type: "text", accessor: (user) => user.name },
   {
     id: "email",
     header: "Email",
     type: "text",
     accessor: (user) => user.email,
-    sortable: true,
-    searchable: true,
-    filter: { kind: "text" },
   },
   {
     id: "role",
     header: "Role",
-    type: "text",
+    type: "enum",
+    options: ROLE_OPTIONS,
     accessor: (user) => user.role,
-    sortable: true,
-    filter: { kind: "select", options: ROLE_OPTIONS },
   },
   {
     id: "status",
     header: "Status",
-    type: "text",
+    type: "enum",
+    options: STATUS_OPTIONS,
     accessor: (user) => user.status,
-    sortable: true,
-    filter: { kind: "select", options: STATUS_OPTIONS },
   },
   {
     id: "createdAt",
     header: "Created",
     type: "date",
     accessor: (user) => user.createdAt,
-    sortable: true,
-    filter: { kind: "date" },
   },
 ];
 
