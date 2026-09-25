@@ -19,9 +19,19 @@ searchable columns.
 _Avoid_: quick search, simple search
 
 **Advanced Search**:
-A disclosed panel of structured, per-column filters on a Table. Combines with Basic Search as
-AND-ed constraints — it layers on top rather than replacing it.
+Structured, per-column filters on a Table, shown as a bar of **filter chips** (`Column · operator ·
+value · ×`). A "+" menu (searchable) adds a chip for a filterable column; clicking a chip's operator
+or value edits it in place. The operator is suited to the column's data type (text: contains / equals
+/ starts with / ends with; number: equals, does not equal, less/greater than (or equal), between;
+date: between / is / before / after (and on or before/after); select: is any of / is none of). One
+chip per column; "Clear filters" removes them all. Combines with Basic Search as AND-ed constraints —
+it layers on top rather than replacing it.
 _Avoid_: filter panel, power search
+
+**View**:
+Everything that picks which rows a Table shows: page, page size, sort, Basic Search and Advanced
+Search. Kept in the page URL's query string, so a View can be bookmarked, shared or refreshed;
+Back/Forward step through Views. Selection is not part of the View.
 
 **Selection**:
 The set of currently checked rows in a Table. Scoped to the current page only — the "select all"

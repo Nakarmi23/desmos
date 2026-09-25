@@ -4,6 +4,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 
+import { IconButton } from "@/components/button/button";
 import { getActiveHref } from "@/components/nav/nav-active";
 import { NAV_ITEMS, NAV_SECTIONS } from "@/components/nav/nav-items";
 
@@ -37,11 +38,12 @@ export function MobileSidebarDrawer() {
               </span>
             </div>
             <Dialog.Close
-              aria-label="Close navigation"
-              className={styles.drawerCloseButton()}
-            >
-              <XIcon aria-hidden className={styles.drawerCloseIcon()} />
-            </Dialog.Close>
+              render={
+                <IconButton label="Close navigation">
+                  <XIcon />
+                </IconButton>
+              }
+            />
           </div>
 
           <nav className={styles.drawerNav()} data-open="true">
