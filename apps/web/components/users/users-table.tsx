@@ -1,18 +1,24 @@
 "use client";
 
-import { Table, type TableBulkAction } from "./table";
-import type { TableColumn, TableFilterOption } from "./table-column";
-import type { TableFetcher } from "./table-fetcher";
+import { Table, type TableBulkAction } from "@/components/table/table";
+import type {
+  TableColumn,
+  TableFilterOption,
+} from "@/components/table/table-column";
+import type { TableFetcher } from "@/components/table/table-fetcher";
 import {
   USERS,
   type User,
   type UserRole,
   type UserStatus,
 } from "./users-fixture";
-import type { TableUrlConfig } from "./table-url-state";
-import { useTableUrlState } from "./use-table-url-state";
-import { DEFAULT_PAGE_SIZE, DEFAULT_PAGE_SIZE_OPTIONS } from "./table-view";
-import { windowFixture } from "./window-fixture";
+import type { TableUrlConfig } from "@/components/table/table-url-state";
+import { useTableUrlState } from "@/components/table/use-table-url-state";
+import {
+  DEFAULT_PAGE_SIZE,
+  DEFAULT_PAGE_SIZE_OPTIONS,
+} from "@/components/table/table-view";
+import { windowFixture } from "@/components/table/window-fixture";
 
 // Record<..> makes the compiler flag a new role/status that has no label.
 const ROLE_LABELS: Record<UserRole, string> = {

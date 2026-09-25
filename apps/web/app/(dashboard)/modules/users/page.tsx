@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { UsersTable } from "@/components/table/users-table";
+import { UsersTable } from "@/components/users/users-table";
 
 export default function UsersModulePage() {
   // The table's view lives in the query string, which isn't known when the

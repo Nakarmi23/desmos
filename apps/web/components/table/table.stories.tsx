@@ -2,8 +2,11 @@ import type { Meta, StoryObj } from "@storybook/nextjs";
 
 import { Table } from "./table";
 import type { TableFetcher } from "./table-fetcher";
-import { USER_BULK_ACTIONS, USER_COLUMNS } from "./users-table";
-import { USERS, type User } from "./users-fixture";
+import {
+  USER_BULK_ACTIONS,
+  USER_COLUMNS,
+} from "@/components/users/users-table";
+import { USERS, type User } from "@/components/users/users-fixture";
 import { windowFixture } from "./window-fixture";
 
 const populated: TableFetcher<User> = async (page, pageSize, sort, filters) =>
