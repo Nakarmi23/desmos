@@ -16,5 +16,5 @@ export function listRoles(): Promise<Role[]> {
       description: "description",
       isSystem: "is_system",
     })
-    .orderBy("name_key");
+    .orderByRaw("lower(name)");
 }

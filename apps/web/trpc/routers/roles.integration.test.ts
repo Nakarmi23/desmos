@@ -19,6 +19,12 @@ describe("roles.list (integration)", () => {
     ]);
   });
 
+  it("keeps Role names unique regardless of case", async () => {
+    await expect(db("roles").insert({ name: "ADMINISTRATOR" })).rejects.toThrow(
+      /roles_name_lower_unique/,
+    );
+  });
+
   describe("with other Roles", () => {
     const names = ["auditor", "Zebra keeper", "Billing"];
 
