@@ -46,16 +46,38 @@ stubbed (no real effect) until a real backend exists for that data.
 ### Users
 
 **User**:
-A person with access to the app, shown in the Users Table. Columns: `name`, `email`, `role`,
-`status`, `createdAt`.
+A person with access to the app, shown in the Users Table. Has a display name, a **Username**, an
+optional email, and any number of assigned **Roles** (none means no access). An email is only
+needed for the User to receive emails.
+
+**Username**:
+The identifier a User signs in with. Unique, case-insensitive.
 
 **Role**:
-A User's permission level: `admin`, `member`, or `viewer`.
+A named set of **Permissions** that admins manage and assign to Users. Not a fixed list — admins
+can add Roles beyond the **Initial Role**. A User holding several Roles gets everything each of
+them grants combined; Roles never contain other Roles.
+
+**Permission**:
+A single thing a Role allows its holders to do. (Defined later, alongside sign-in.)
+
+**Initial Role** / **Initial User**:
+The Role and User that exist from the moment the app is first set up, so there is always someone
+who can sign in and administer it. The Initial User's credentials come from the deployment's
+configuration, never from source code. There is exactly one Initial User, fixed at setup, forever.
+It can't be suspended or lose the Initial Role; its name, username, email and password remain
+editable, and any other active holder of the Initial Role can reset its password (so leaked setup
+credentials can always be revoked from inside the app). Other Users may also hold the Initial Role — the Initial User is simply the one
+holder that can never lose it.
+
+**System Role**:
+A Role the app itself depends on, which admins can't delete or rename. The Initial Role
+("Administrator") is the only one.
 
 **Status**:
-A User's account state: `active`, `invited`, or `suspended`.
+A User's account state: `active` or `suspended`.
 
 **Suspend**:
-The Bulk Action that moves one or more Users out of `active` status. Not a deletion — the User
-record and its data are retained.
+The Bulk Action that moves one or more Users out of `active` status. The only way to remove a
+User's access — Users are never deleted; the record and its data are retained.
 _Avoid_: Deactivate, Delete
