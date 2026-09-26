@@ -1,5 +1,6 @@
 "use client";
 
+import { Tooltip } from "@base-ui/react/tooltip";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
@@ -10,27 +11,52 @@ import { sidebarStyles } from "./sidebar.styles";
 
 const styles = sidebarStyles();
 
+/**
+ * `showTooltip` is on only in the icon rail, where the label is hidden —
+ * the tooltip names the row instead. `disabled` (rather than conditionally
+ * wrapping) keeps the row's element stable across collapse/expand.
+ */
 function NavRow({
   item,
   activeHref,
+  showTooltip,
 }: {
   item: NavItem;
   activeHref: string | undefined;
+  showTooltip: boolean;
 }) {
   const active = item.href === activeHref;
 
   return (
-    <Link
-      href={item.href}
-      data-active={active || undefined}
-      aria-current={active ? "page" : undefined}
-      className={styles.navLink()}
-    >
-      <div aria-hidden className={styles.navIconGlyph()}>
-        {item.icon}
-      </div>
-      <span className={styles.navLabelText()}>{item.label}</span>
-    </Link>
+    <Tooltip.Root disabled={!showTooltip}>
+      <Tooltip.Trigger
+        delay={0}
+        render={
+          <Link
+            href={item.href}
+            data-active={active || undefined}
+            aria-current={active ? "page" : undefined}
+            className={styles.navLink()}
+          />
+        }
+      >
+        <div aria-hidden className={styles.navIconGlyph()}>
+          {item.icon}
+        </div>
+        <span className={styles.navLabelText()}>{item.label}</span>
+      </Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Positioner
+          side="right"
+          sideOffset={12}
+          className={styles.navTooltipPositioner()}
+        >
+          <Tooltip.Popup className={styles.navTooltipPopup()}>
+            {item.label}
+          </Tooltip.Popup>
+        </Tooltip.Positioner>
+      </Tooltip.Portal>
+    </Tooltip.Root>
   );
 }
 
@@ -38,9 +64,11 @@ function NavRow({
 function StaticNavSection({
   section,
   activeHref,
+  showTooltips,
 }: {
   section: NavSection;
   activeHref: string | undefined;
+  showTooltips: boolean;
 }) {
   return (
     <div className={styles.navSection()}>
@@ -48,7 +76,12 @@ function StaticNavSection({
         <span className={styles.navSectionLabel()}>{section.label}</span>
       </span>
       {section.items.map((item) => (
-        <NavRow key={item.href} item={item} activeHref={activeHref} />
+        <NavRow
+              key={item.href}
+              item={item}
+              activeHref={activeHref}
+              showTooltip={showTooltips}
+            />
       ))}
     </div>
   );
@@ -64,9 +97,11 @@ function StaticNavSection({
 function CollapsibleNavSection({
   section,
   activeHref,
+  showTooltips,
 }: {
   section: NavSection;
   activeHref: string | undefined;
+  showTooltips: boolean;
 }) {
   const [expanded, setExpanded] = useState(true);
   const panelId = `nav-section-${section.id}`;
@@ -91,7 +126,12 @@ function CollapsibleNavSection({
       {expanded && (
         <div id={panelId} className={styles.navSection()}>
           {section.items.map((item) => (
-            <NavRow key={item.href} item={item} activeHref={activeHref} />
+            <NavRow
+              key={item.href}
+              item={item}
+              activeHref={activeHref}
+              showTooltip={showTooltips}
+            />
           ))}
         </div>
       )}
@@ -102,13 +142,25 @@ function CollapsibleNavSection({
 export function NavSectionGroup({
   section,
   activeHref,
+  showTooltips,
 }: {
   section: NavSection;
   activeHref: string | undefined;
+  showTooltips: boolean;
 }) {
   if (section.collapsible) {
-    return <CollapsibleNavSection section={section} activeHref={activeHref} />;
+    return <CollapsibleNavSection
+        section={section}
+        activeHref={activeHref}
+        showTooltips={showTooltips}
+      />;
   }
 
-  return <StaticNavSection section={section} activeHref={activeHref} />;
+  return (
+    <StaticNavSection
+      section={section}
+      activeHref={activeHref}
+      showTooltips={showTooltips}
+    />
+  );
 }

@@ -69,6 +69,16 @@ export const sidebarStyles = tv({
       "group-data-[open]:w-auto group-data-[open]:opacity-100",
       "group-data-[closed]:w-0 group-data-[closed]:opacity-0",
     ],
+    // Names a nav row in the icon rail, where its label is hidden. Portaled
+    // out of the sidebar, so it re-applies `theme-inverse` to match it.
+    // Above the table's sticky header (`z-10`) and filter popups (`z-20`).
+    navTooltipPositioner: "z-50",
+    navTooltipPopup: [
+      "theme-inverse rounded-md border border-border bg-surface px-2 py-1 text-xs font-medium text-text shadow-lg",
+      "transition-[transform,opacity] duration-150 ease-out",
+      "data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
+      "data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
+    ],
     footer: "border-t border-border p-1",
     // The trigger for the user menu — the whole row is clickable, not just
     // the chevron, so it's a `<button>` (via `Menu.Trigger`) rather than the

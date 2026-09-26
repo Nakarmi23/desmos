@@ -14,14 +14,18 @@ jest.mock("next/navigation", () => ({
 
 // The collapse toggle lives in `TopBar`, not `Sidebar` itself, so both render
 // together here — matching how the real dashboard layout composes them.
-function renderSidebar() {
+function renderSidebar({ collapsed = false } = {}) {
   return render(
-    <SidebarProvider defaultCollapsed={false}>
+    <SidebarProvider defaultCollapsed={collapsed}>
       <Sidebar />
       <TopBar />
     </SidebarProvider>,
   );
 }
+
+// Base UI's tooltip popup has no `role`, so it's found as the nav label's text
+// inside a portal (the row's own label isn't portaled).
+const TOOLTIP_POPUP = "[data-base-ui-portal] *";
 
 describe("Sidebar", () => {
   it("collapses when the toggle is clicked, and expands again on a second click", async () => {
@@ -62,5 +66,28 @@ describe("Sidebar", () => {
     const inactiveLink = screen.getByRole("link", { name: "Settings" });
     expect(inactiveLink).not.toHaveAttribute("aria-current");
     expect(inactiveLink).not.toHaveAttribute("data-active");
+  });
+
+  it("names a nav item in a tooltip on hover only while collapsed", async () => {
+    const user = userEvent.setup();
+    renderSidebar({ collapsed: true });
+
+    await user.hover(screen.getByRole("link", { name: "Settings" }));
+    expect(
+      await screen.findByText("Settings", { selector: TOOLTIP_POPUP }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows no nav tooltip while expanded", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.hover(screen.getByRole("link", { name: "Settings" }));
+    // Give a would-be tooltip the same tick to open that the collapsed case
+    // gets from `findByText`.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(
+      screen.queryByText("Settings", { selector: TOOLTIP_POPUP }),
+    ).not.toBeInTheDocument();
   });
 });

@@ -53,6 +53,7 @@ export function MobileSidebarDrawer() {
                   key={section.id}
                   section={section}
                   activeHref={activeHref}
+                  showTooltips={false}
                 />
               ),
             )}

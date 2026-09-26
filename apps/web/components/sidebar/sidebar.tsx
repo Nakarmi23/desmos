@@ -46,6 +46,7 @@ export function Sidebar() {
               key={section.id}
               section={section}
               activeHref={activeHref}
+              showTooltips={collapsed}
             />
           ),
         )}
