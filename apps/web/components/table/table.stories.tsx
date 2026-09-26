@@ -4,10 +4,8 @@ import { Table } from "./table";
 import type { TableColumn } from "./table-column";
 import { windowFixture } from "./window-fixture";
 import type { TableFetcher } from "./table-fetcher";
-import {
-  USER_BULK_ACTIONS,
-  USER_COLUMNS,
-} from "@/components/users/users-table";
+import { USER_BULK_ACTIONS } from "@/components/users/users-table";
+import { USER_COLUMNS } from "@/components/users/users-table-config";
 import { USERS } from "@/components/users/users-fixture";
 import type { UserListRow } from "@/modules/users/user";
 

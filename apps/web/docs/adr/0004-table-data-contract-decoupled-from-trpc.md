@@ -17,3 +17,9 @@ parallel, and keeps swapping fixture data for real data a caller-side change onl
 **Consequences**: every `Table` usage needs a small adapter (fixture-backed now, tRPC-backed
 later) implementing the fetcher signature — one extra layer of indirection versus calling
 `useQuery` straight from the call site.
+
+**First load (ADR 0001 for Tables)**: a Table doesn't read React Query's cache, so instead of
+hydration helpers its page (a Server Component) decodes the view from the URL, calls the
+procedure via `createCaller`, and passes the result to the Table as `initialData`. The Table
+renders it on first render — rows are in the server HTML — and fetches every later view through
+its fetcher over HTTP.

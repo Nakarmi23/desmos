@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 
-import type { TableSort } from "@/components/table/table-fetcher";
+import type { TableFilters, TableSort } from "@/components/table/table-fetcher";
 
 export const USER_STATUSES = ["active", "suspended"] as const;
 
@@ -45,4 +45,32 @@ export type UserSort = z.infer<typeof userSortSchema>;
 export function toUserSort(sort: TableSort): UserSort {
   const parsed = userSortSchema.safeParse(sort);
   return parsed.success ? parsed.data : null;
+}
+
+/**
+ * `users.list` input: the Table fetcher contract's arguments (ADR 0004).
+ * Advanced Search isn't supported yet, so only Basic Search is accepted.
+ */
+export const usersListInputSchema = z.object({
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1).max(100),
+  sort: userSortSchema,
+  filters: z.strictObject({ search: z.string().optional() }),
+});
+
+export type UsersListInput = z.infer<typeof usersListInputSchema>;
+
+/** The Table fetcher's arguments as a `users.list` input. */
+export function toUsersListInput(
+  page: number,
+  pageSize: number,
+  sort: TableSort,
+  filters: TableFilters,
+): UsersListInput {
+  return {
+    page,
+    pageSize,
+    sort: toUserSort(sort),
+    filters: { search: filters.search },
+  };
 }
