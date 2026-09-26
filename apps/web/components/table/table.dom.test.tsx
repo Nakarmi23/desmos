@@ -2044,3 +2044,56 @@ describe("Table multi-value enum column", () => {
     await waitFor(() => expect(names()).toEqual(["Grace", "Linus"]));
   });
 });
+
+describe("Table initial data", () => {
+  it("shows rows loaded elsewhere (e.g. on the server) without fetching them again", async () => {
+    const user = userEvent.setup();
+    const fetcher = pagedFetcher();
+    render(
+      <Table
+        columns={columns}
+        fetcher={fetcher}
+        getRowId={(r) => r.id}
+        {...SMALL_PAGES}
+        initialData={{ rows: manyRows.slice(0, 10), total: manyRows.length }}
+      />,
+    );
+
+    // On the very first render: no loading state in between.
+    expect(screen.getByText("Person 1")).toBeInTheDocument();
+    expect(screen.getByRole("grid")).toHaveAttribute("aria-busy", "false");
+    expect(screen.getAllByRole("button", { name: /^Page \d+$/ })).toHaveLength(
+      3,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(fetcher).not.toHaveBeenCalled();
+
+    // Later views load through the fetcher as usual…
+    await user.click(screen.getByRole("button", { name: "Page 2" }));
+    expect(await screen.findByText("Person 11")).toBeInTheDocument();
+    expect(fetcher).toHaveBeenLastCalledWith(2, 10, null, {});
+
+    // …including a return to the first one.
+    await user.click(screen.getByRole("button", { name: "Page 1" }));
+    expect(await screen.findByText("Person 1")).toBeInTheDocument();
+    expect(fetcher).toHaveBeenLastCalledWith(1, 10, null, {});
+  });
+
+  it("moves to the last page when the initial data is past the end", async () => {
+    const fetcher = pagedFetcher();
+    render(
+      <Table
+        columns={columns}
+        fetcher={fetcher}
+        getRowId={(r) => r.id}
+        {...SMALL_PAGES}
+        initialView={{ page: 9, pageSize: 10, sort: null, filters: {} }}
+        initialData={{ rows: [], total: manyRows.length }}
+      />,
+    );
+
+    expect(await screen.findByText("Person 21")).toBeInTheDocument();
+    expect(fetcher).toHaveBeenLastCalledWith(3, 10, null, {});
+    expect(screen.queryByText("No results found")).not.toBeInTheDocument();
+  });
+});

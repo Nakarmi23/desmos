@@ -24,7 +24,11 @@ import {
   type TableColumn,
   type TableFilterOption,
 } from "./table-column";
-import type { TableFetcher, TableSort } from "./table-fetcher";
+import type {
+  TableFetcher,
+  TableFetcherResult,
+  TableSort,
+} from "./table-fetcher";
 import { TableAdvancedSearch } from "./table-advanced-search";
 import { TablePagination } from "./table-pagination";
 import { useTableFilters } from "./use-table-filters";
@@ -68,6 +72,12 @@ export type TableProps<T extends RowData> = {
    * size not in `pageSizeOptions` falls back to `defaultPageSize`.
    */
   initialView?: TableView;
+  /**
+   * The fetcher's result for the view the Table opens on, loaded elsewhere
+   * (e.g. on the server): shown on the first render, instead of fetching it.
+   * Used on mount only; every later view goes through `fetcher`.
+   */
+  initialData?: TableFetcherResult<T>;
   /** Called with each settled view (debounced for search), mount included. */
   onViewChange?: (view: TableView) => void;
 };
@@ -114,11 +124,14 @@ export function Table<T extends RowData>({
   bulkActions,
   defaultSort = null,
   initialView,
+  initialData,
   onViewChange,
 }: TableProps<T>) {
   const [result, setResult] = useState<FetchResult<T> | null>(null);
   // Last known total, kept while a new page loads so the controls don't vanish.
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState(initialData?.total ?? 0);
+  // `initialData`, until it's been taken as the first view's result.
+  const [seed, setSeed] = useState(initialData);
   const [attempt, setAttempt] = useState(0);
   const [active, setActive] = useState<ActiveCell>({
     row: 0,
@@ -198,6 +211,12 @@ export function Table<T extends RowData>({
   // the grid's focus position and, together with `attempt`, keys the request.
   const viewKey = `${pageIndex}:${pageSize}:${sortKey}:${filtersKey}`;
   const requestKey = `${viewKey}:${attempt}`;
+  // The first view's result is already here: take it during the first render
+  // (so server-rendered HTML has the rows), keyed like a fetched one.
+  if (seed) {
+    setSeed(undefined);
+    setResult({ requestKey, outcome: toOutcome(seed, pageIndex, pageSize) });
+  }
   const outcome = result?.requestKey === requestKey ? result.outcome : null;
   // Past the end reads as still loading: the last page is on its way.
   const state =
@@ -362,26 +381,18 @@ export function Table<T extends RowData>({
     onViewChangeRef.current?.({ page: pageIndex + 1, pageSize, sort, filters });
   }, [settled, pageIndex, pageSize, sort, filters]);
 
+  // Only fetch a request that hasn't been answered (e.g. by `initialData`).
+  const answeredKey = result?.requestKey;
   useEffect(() => {
+    if (answeredKey === requestKey) return;
     let cancelled = false;
     fetcher(pageIndex + 1, pageSize, sort, filters).then(
       (response) => {
         if (cancelled) return;
         setTotal(response.total);
-        const lastPageIndex = Math.max(
-          Math.ceil(response.total / pageSize) - 1,
-          0,
-        );
-        if (response.rows.length === 0 && pageIndex > lastPageIndex) {
-          setResult({
-            requestKey,
-            outcome: { status: "pastEnd", lastPageIndex },
-          });
-          return;
-        }
         setResult({
           requestKey,
-          outcome: { status: "success", rows: response.rows },
+          outcome: toOutcome(response, pageIndex, pageSize),
         });
       },
       () => {
@@ -393,7 +404,7 @@ export function Table<T extends RowData>({
     return () => {
       cancelled = true;
     };
-  }, [fetcher, pageIndex, pageSize, sort, filters, requestKey]);
+  }, [fetcher, pageIndex, pageSize, sort, filters, requestKey, answeredKey]);
 
   const searchField = hasSearch ? (
     <TextField
@@ -583,6 +594,19 @@ export function Table<T extends RowData>({
       )}
     </div>
   );
+}
+
+// An empty page beyond the last one means the rows moved (or the URL was
+// stale): go to the last page rather than show "no results".
+function toOutcome<T extends RowData>(
+  response: TableFetcherResult<T>,
+  pageIndex: number,
+  pageSize: number,
+): FetchResult<T>["outcome"] {
+  const lastPageIndex = Math.max(Math.ceil(response.total / pageSize) - 1, 0);
+  return response.rows.length === 0 && pageIndex > lastPageIndex
+    ? { status: "pastEnd", lastPageIndex }
+    : { status: "success", rows: response.rows };
 }
 
 function toSorting(sort: TableSort) {
