@@ -26,6 +26,9 @@ export function Checkbox({
   const styles = checkboxStyles();
   const input = (
     <input
+      // Firefox restores form state (incl. `disabled`) on reload, which
+      // desyncs controlled inputs from the SSR HTML → hydration mismatch.
+      autoComplete="off"
       {...props}
       type="checkbox"
       ref={(element) => {
