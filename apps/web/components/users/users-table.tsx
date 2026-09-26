@@ -6,8 +6,7 @@ import {
   type TableColumn,
 } from "@/components/table/table-column";
 import type { TableFetcher } from "@/components/table/table-fetcher";
-import type { UserStatus } from "@/modules/users/user";
-import type { User } from "./users-fixture";
+import type { UserListRow, UserStatus } from "@/modules/users/user";
 import type { TableUrlConfig } from "@/components/table/table-url-state";
 import { useTableUrlState } from "@/components/table/use-table-url-state";
 import {
@@ -25,7 +24,7 @@ const STATUS_LABELS: Record<UserStatus, string> = {
 const NO_FILTER = { filter: false } as const;
 
 // Sorting and Basic Search (text columns) come from `type`.
-export const USER_COLUMNS: TableColumn<User>[] = [
+export const USER_COLUMNS: TableColumn<UserListRow>[] = [
   {
     id: "name",
     header: "Name",
@@ -66,7 +65,7 @@ export const USER_COLUMNS: TableColumn<User>[] = [
 
 // One source for both the Table and the URL, so they agree on columns, page
 // sizes and (if one is added) the default sort.
-const TABLE_CONFIG: TableUrlConfig<User> = {
+const TABLE_CONFIG: TableUrlConfig<UserListRow> = {
   columns: USER_COLUMNS,
   defaultPageSize: DEFAULT_PAGE_SIZE,
   pageSizeOptions: DEFAULT_PAGE_SIZE_OPTIONS,
@@ -80,7 +79,7 @@ export const USER_BULK_ACTIONS: TableBulkAction[] = [
 
 export type UsersTableProps = {
   /** Adapter for the fetcher contract (ADR 0004): fixture- or tRPC-backed. */
-  fetcher: TableFetcher<User>;
+  fetcher: TableFetcher<UserListRow>;
 };
 
 // The page is a Server Component and functions can't cross the server→client

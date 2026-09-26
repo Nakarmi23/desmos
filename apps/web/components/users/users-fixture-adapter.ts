@@ -1,13 +1,14 @@
 import type { TableFetcher } from "@/components/table/table-fetcher";
 import { windowFixture } from "@/components/table/window-fixture";
-import { USERS, type User } from "./users-fixture";
+import type { UserListRow } from "@/modules/users/user";
+import { USERS } from "./users-fixture";
 import { USER_COLUMNS } from "./users-table";
 
 /**
  * Fixture-backed adapter for the fetcher contract (ADR 0004), for Storybook
  * and DOM tests.
  */
-export const fetchFixtureUsers: TableFetcher<User> = async (
+export const fetchFixtureUsers: TableFetcher<UserListRow> = async (
   page,
   pageSize,
   sort,
