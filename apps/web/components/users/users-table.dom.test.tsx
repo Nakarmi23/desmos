@@ -125,7 +125,7 @@ describe("UsersTable", () => {
       const roles = cellsOf(2);
       expect(loadedNames()).toBe(true);
       expect(roles.length).toBeGreaterThan(0);
-      expect(roles.every((r) => r === "admin" || r === "viewer")).toBe(true);
+      expect(roles.every((r) => r === "Admin" || r === "Viewer")).toBe(true);
     });
     await user.keyboard("{Escape}");
 
@@ -140,7 +140,7 @@ describe("UsersTable", () => {
       expect(created.length).toBeGreaterThan(0);
       expect(created.every((d) => d! >= "2024-01-01")).toBe(true);
       // The role filter still applies alongside the date range.
-      expect(cellsOf(2).every((r) => r === "admin" || r === "viewer")).toBe(
+      expect(cellsOf(2).every((r) => r === "Admin" || r === "Viewer")).toBe(
         true,
       );
     });
@@ -152,7 +152,7 @@ describe("UsersTable", () => {
       "daniel.andersen@",
     );
     await waitFor(() => expect(cellsOf(0)).toEqual(["Daniel Andersen"]));
-    expect(cellsOf(2)).toEqual(["admin"]);
+    expect(cellsOf(2)).toEqual(["Admin"]);
 
     // A Basic Search hit outside the filters (Ava, created in 2023) is excluded.
     await user.clear(screen.getByRole("searchbox", { name: "Search" }));
@@ -186,7 +186,7 @@ describe("UsersTable", () => {
       const roles = cellsOf(2);
       expect(loadedNames()).toBe(true);
       expect(roles.length).toBeGreaterThan(0);
-      expect(roles).not.toContain("admin");
+      expect(roles).not.toContain("Admin");
     });
 
     await addFilter(user, /^Created/, "Created");
@@ -217,7 +217,7 @@ describe("UsersTable", () => {
       expect(loadedNames()).toBe(true);
       expect(created.length).toBeGreaterThan(0);
       expect(created.every((d) => d! < "2023-12-31")).toBe(true);
-      expect(cellsOf(2)).not.toContain("admin");
+      expect(cellsOf(2)).not.toContain("Admin");
     });
   });
 
@@ -255,7 +255,7 @@ describe("UsersTable", () => {
       expect(
         screen.getByRole("group", { name: "Role filter" }),
       ).toBeInTheDocument();
-      expect(cellsOf(2).every((r) => r === "admin")).toBe(true);
+      expect(cellsOf(2).every((r) => r === "Admin")).toBe(true);
     });
 
     it("writes each new view to the URL, keeping params it doesn't own", async () => {
