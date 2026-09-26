@@ -1,9 +1,6 @@
 import type { UserListRow, UserStatus } from "@/modules/users/user";
 
-/** A User as the Users Table lists it (the `users.list` row shape). */
-export type User = UserListRow;
-
-const HAND_WRITTEN_USERS: User[] = [
+const HAND_WRITTEN_USERS: UserListRow[] = [
   {
     id: "usr_001",
     name: "Ava Thompson",
@@ -287,8 +284,11 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const FIRST_GENERATED_AT = Date.parse("2024-06-01T10:00:00Z");
 
 // Deterministic (no randomness), so tests and stories see the same rows every run.
-function generateUsers(count: number, taken: ReadonlySet<string>): User[] {
-  const users: User[] = [];
+function generateUsers(
+  count: number,
+  taken: ReadonlySet<string>,
+): UserListRow[] {
+  const users: UserListRow[] = [];
   const usernames = new Set(taken);
   for (let i = 0; users.length < count; i++) {
     const first = FIRST_NAMES[(i * 7) % FIRST_NAMES.length];
@@ -316,7 +316,7 @@ function generateUsers(count: number, taken: ReadonlySet<string>): User[] {
   return users;
 }
 
-export const USERS: User[] = [
+export const USERS: UserListRow[] = [
   ...HAND_WRITTEN_USERS,
   ...generateUsers(
     TOTAL_USERS - HAND_WRITTEN_USERS.length,

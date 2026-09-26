@@ -1,13 +1,13 @@
 import type { Knex } from "knex";
 
 import { db } from "../../db";
-import type { UserListRow, UserSortColumn } from "./user";
+import type { UserListRow, UserSort, UserSortColumn } from "./user";
 
 export type ListUsersQuery = {
   /** 1-based. */
   page: number;
   pageSize: number;
-  sort: { columnId: UserSortColumn; direction: "asc" | "desc" } | null;
+  sort: UserSort;
   /** Basic Search: matched against name, username and email, ignoring case. */
   search?: string;
 };

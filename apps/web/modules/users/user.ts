@@ -1,4 +1,8 @@
-// Types only (no DB access), so client components can import them too.
+// No DB access, so client components can import this too.
+
+import { z } from "zod";
+
+import type { TableSort } from "@/components/table/table-fetcher";
 
 export const USER_STATUSES = ["active", "suspended"] as const;
 
@@ -26,3 +30,19 @@ export const USER_SORT_COLUMNS = [
 ] as const;
 
 export type UserSortColumn = (typeof USER_SORT_COLUMNS)[number];
+
+/** A `users.list` sort: the Table fetcher contract's, narrowed to its columns. */
+export const userSortSchema = z
+  .object({
+    columnId: z.enum(USER_SORT_COLUMNS),
+    direction: z.enum(["asc", "desc"]),
+  })
+  .nullable();
+
+export type UserSort = z.infer<typeof userSortSchema>;
+
+/** The Table's sort as a `users.list` one; a column it can't sort by is none. */
+export function toUserSort(sort: TableSort): UserSort {
+  const parsed = userSortSchema.safeParse(sort);
+  return parsed.success ? parsed.data : null;
+}

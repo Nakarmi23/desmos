@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { listUsers } from "../../modules/users/dal";
-import { USER_SORT_COLUMNS } from "../../modules/users/user";
+import { userSortSchema } from "../../modules/users/user";
 import { publicProcedure, router } from "../init";
 
 // The Table fetcher contract's shapes (ADR 0004). Advanced Search filters
@@ -9,12 +9,7 @@ import { publicProcedure, router } from "../init";
 const listInput = z.object({
   page: z.number().int().min(1),
   pageSize: z.number().int().min(1).max(100),
-  sort: z
-    .object({
-      columnId: z.enum(USER_SORT_COLUMNS),
-      direction: z.enum(["asc", "desc"]),
-    })
-    .nullable(),
+  sort: userSortSchema,
   filters: z.strictObject({ search: z.string().optional() }),
 });
 

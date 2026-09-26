@@ -1,6 +1,10 @@
 import { hash } from "@node-rs/argon2";
 
 import { db, destroyPool } from "../../db";
+import {
+  normalizeEmail,
+  normalizeUsername,
+} from "../../modules/users/normalize";
 import { createCaller } from "../caller";
 import { createContextInner } from "../context";
 
@@ -66,10 +70,18 @@ const usernames = (result: { rows: { username: string }[] }) =>
 
 describe("users.list (integration)", () => {
   beforeAll(async () => {
+    // A freshly migrated database: the Initial User is the only other User.
+    await db.migrate.rollback(undefined, true);
     await db.migrate.latest();
     const passwordHash = await hash("irrelevant-test-password");
     await db("users").insert(
-      SEEDS.map((seed) => ({ ...seed, password_hash: passwordHash })),
+      SEEDS.map((seed) => ({
+        ...seed,
+        // Stored the way every write stores them.
+        username: normalizeUsername(seed.username),
+        email: normalizeEmail(seed.email),
+        password_hash: passwordHash,
+      })),
     );
   });
   afterAll(async () => {
@@ -129,22 +141,26 @@ describe("users.list (integration)", () => {
     expect(usernames(desc)).toEqual([...ascending].reverse());
   });
 
-  it("sorts by email, ignoring case, with missing emails last ascending", async () => {
-    const asc = await list({ sort: { columnId: "email", direction: "asc" } });
-
-    // The Initial User has no email either; ties fall back to a stable order.
-    expect(usernames(asc).slice(0, 3)).toEqual(["ada", "liskov", "grace"]);
-    expect(usernames(asc).slice(3).sort()).toEqual(["admin", "linus"]);
-  });
-
-  it("sorts by Status", async () => {
-    const asc = await list({ sort: { columnId: "status", direction: "asc" } });
-    const desc = await list({
-      sort: { columnId: "status", direction: "desc" },
-    });
-
-    expect(usernames(asc).at(-1)).toBe("grace");
-    expect(usernames(desc)[0]).toBe("grace");
+  // Ties (same Status, no email) keep creation order in both directions.
+  it.each([
+    [
+      "email",
+      // Missing emails (Linus, the Initial User) sort last ascending.
+      ["ada", "liskov", "grace", "linus", "admin"],
+      ["linus", "admin", "grace", "liskov", "ada"],
+    ],
+    [
+      "status",
+      ["ada", "linus", "liskov", "admin", "grace"],
+      ["grace", "ada", "linus", "liskov", "admin"],
+    ],
+  ])("sorts by %s in both directions", async (columnId, asc, desc) => {
+    expect(
+      usernames(await list({ sort: { columnId, direction: "asc" } })),
+    ).toEqual(asc);
+    expect(
+      usernames(await list({ sort: { columnId, direction: "desc" } })),
+    ).toEqual(desc);
   });
 
   it("Basic Search matches name, username or email, ignoring case", async () => {
