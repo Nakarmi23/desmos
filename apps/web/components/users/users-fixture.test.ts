@@ -15,6 +15,14 @@ describe("USERS fixture", () => {
     expect(USERS.filter((u) => u.isInitial)).toHaveLength(1);
   });
 
+  it("gives Users several, one or no Roles, the Initial User holding Administrator", () => {
+    const counts = new Set(USERS.map((u) => u.roles.length));
+    expect(counts).toEqual(new Set([0, 1, 2]));
+    expect(
+      USERS.find((u) => u.isInitial)!.roles.map((role) => role.name),
+    ).toContain("Administrator");
+  });
+
   it("has valid creation dates", () => {
     expect(USERS.every((u) => !Number.isNaN(u.createdAt.getTime()))).toBe(true);
   });

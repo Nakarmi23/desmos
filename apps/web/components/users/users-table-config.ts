@@ -3,6 +3,7 @@
 import {
   toFilterOptions,
   type TableColumn,
+  type TableFilterOption,
 } from "@/components/table/table-column";
 import type { TableUrlConfig } from "@/components/table/table-url-state";
 import {
@@ -17,31 +18,41 @@ const STATUS_LABELS: Record<UserStatus, string> = {
   suspended: "Suspended",
 };
 
-// `users.list` doesn't do Advanced Search yet, so no column offers it.
-const NO_FILTER = { filter: false } as const;
+/** A Role as an option for the Roles column: its id, labelled by name. */
+export const toRoleOptions = (
+  roles: readonly { id: string; name: string }[],
+): TableFilterOption[] =>
+  roles.map(({ id, name }) => ({ value: id, label: name }));
 
-// Sorting and Basic Search (text columns) come from `type`.
-export const USER_COLUMNS: TableColumn<UserListRow>[] = [
+// Sorting, Basic Search (text columns) and Advanced Search come from `type`.
+// Roles are data, not a fixed set, so their options come from the caller.
+export const userColumns = (
+  roleOptions: readonly TableFilterOption[],
+): TableColumn<UserListRow>[] => [
   {
     id: "name",
     header: "Name",
     type: "text",
     accessor: (user) => user.name,
-    ...NO_FILTER,
   },
   {
     id: "username",
     header: "Username",
     type: "text",
     accessor: (user) => user.username,
-    ...NO_FILTER,
   },
   {
     id: "email",
     header: "Email",
     type: "text",
     accessor: (user) => user.email,
-    ...NO_FILTER,
+  },
+  {
+    id: "roles",
+    header: "Roles",
+    type: "multiEnum",
+    options: roleOptions,
+    accessor: (user) => user.roles.map((role) => role.id),
   },
   {
     id: "status",
@@ -49,21 +60,21 @@ export const USER_COLUMNS: TableColumn<UserListRow>[] = [
     type: "enum",
     options: toFilterOptions(STATUS_LABELS),
     accessor: (user) => user.status,
-    ...NO_FILTER,
   },
   {
     id: "createdAt",
     header: "Created",
     type: "date",
     accessor: (user) => user.createdAt,
-    ...NO_FILTER,
   },
 ];
 
-// One source for both the Table and the URL, so they agree on columns, page
-// sizes and (if one is added) the default sort.
-export const USERS_TABLE_CONFIG: TableUrlConfig<UserListRow> = {
-  columns: USER_COLUMNS,
+// One source for both the Table and the URL (on the server and the client),
+// so they agree on columns, page sizes and (if one is added) the default sort.
+export const usersTableConfig = (
+  roleOptions: readonly TableFilterOption[],
+): TableUrlConfig<UserListRow> => ({
+  columns: userColumns(roleOptions),
   defaultPageSize: DEFAULT_PAGE_SIZE,
   pageSizeOptions: DEFAULT_PAGE_SIZE_OPTIONS,
-};
+});

@@ -17,6 +17,8 @@ export type UserListRow = {
   email: string | null;
   status: UserStatus;
   isInitial: boolean;
+  /** Every Role the User holds, by name; empty when none. */
+  roles: { id: string; name: string }[];
   createdAt: Date;
 };
 
@@ -47,30 +49,65 @@ export function toUserSort(sort: TableSort): UserSort {
   return parsed.success ? parsed.data : null;
 }
 
-/**
- * `users.list` input: the Table fetcher contract's arguments (ADR 0004).
- * Advanced Search isn't supported yet, so only Basic Search is accepted.
- */
+// Advanced Search values, per the fetcher contract's `TableColumnFilterValue`.
+const textFilter = z.object({
+  operator: z.enum(["contains", "eq", "startsWith", "endsWith"]),
+  value: z.string(),
+});
+
+const day = z.iso.date();
+const dateFilter = z.discriminatedUnion("operator", [
+  z.object({ operator: z.enum(["eq", "lt", "lte", "gt", "gte"]), value: day }),
+  z.object({
+    operator: z.literal("between"),
+    from: day.optional(),
+    to: day.optional(),
+  }),
+]);
+
+const setFilter = <V extends z.ZodType<string>>(value: V) =>
+  z.object({ operator: z.enum(["in", "notIn"]), values: z.array(value) });
+
+/** Advanced Search, keyed by the Users Table's filterable column ids. */
+export const userColumnFiltersSchema = z.strictObject({
+  name: textFilter.optional(),
+  username: textFilter.optional(),
+  email: textFilter.optional(),
+  status: setFilter(z.enum(USER_STATUSES)).optional(),
+  createdAt: dateFilter.optional(),
+  /** Role ids. */
+  roles: setFilter(z.uuid()).optional(),
+});
+
+export type UserColumnFilters = z.infer<typeof userColumnFiltersSchema>;
+
+/** `users.list` input: the Table fetcher contract's arguments (ADR 0004). */
 export const usersListInputSchema = z.object({
   page: z.number().int().min(1),
   pageSize: z.number().int().min(1).max(100),
   sort: userSortSchema,
-  filters: z.strictObject({ search: z.string().optional() }),
+  filters: z.strictObject({
+    search: z.string().optional(),
+    columns: userColumnFiltersSchema.optional(),
+  }),
 });
 
 export type UsersListInput = z.infer<typeof usersListInputSchema>;
 
-/** The Table fetcher's arguments as a `users.list` input. */
+/**
+ * The Table fetcher's arguments as a `users.list` input. Throws if a filter
+ * isn't one `users.list` accepts (the Table only offers ones it does).
+ */
 export function toUsersListInput(
   page: number,
   pageSize: number,
   sort: TableSort,
   filters: TableFilters,
 ): UsersListInput {
-  return {
+  return usersListInputSchema.parse({
     page,
     pageSize,
     sort: toUserSort(sort),
-    filters: { search: filters.search },
-  };
+    filters,
+  });
 }

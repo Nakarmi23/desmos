@@ -1,7 +1,10 @@
 import { Suspense } from "react";
 
 import { decodeTableView } from "@/components/table/table-url-state";
-import { USERS_TABLE_CONFIG } from "@/components/users/users-table-config";
+import {
+  toRoleOptions,
+  usersTableConfig,
+} from "@/components/users/users-table-config";
 import { toUsersListInput } from "@/modules/users/user";
 import { createCaller } from "@/trpc/caller";
 import { createContextInner } from "@/trpc/context";
@@ -24,11 +27,14 @@ export default async function UsersPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
+  const caller = createCaller(await createContextInner());
+  // The Roles filter's options come from the Roles that exist, so the URL is
+  // read against them.
+  const roleOptions = toRoleOptions(await caller.roles.list());
   const view = decodeTableView(
     toURLSearchParams(await searchParams),
-    USERS_TABLE_CONFIG,
+    usersTableConfig(roleOptions),
   );
-  const caller = createCaller(await createContextInner());
   const initialData = await caller.users.list(
     toUsersListInput(view.page, view.pageSize, view.sort, view.filters),
   );
@@ -36,7 +42,7 @@ export default async function UsersPage({
   // The Table reads the URL on the client too, so it stays in a <Suspense>.
   return (
     <Suspense>
-      <UsersPageTable initialData={initialData} />
+      <UsersPageTable initialData={initialData} roleOptions={roleOptions} />
     </Suspense>
   );
 }
