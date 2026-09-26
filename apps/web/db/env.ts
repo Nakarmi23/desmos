@@ -69,6 +69,3 @@ export function parseDbEnv(env: RawEnv = process.env): DbEnv {
 
   return result.data;
 }
-
-/** Eagerly-parsed connection config, so misconfiguration fails at load time. */
-export const dbEnv = parseDbEnv();

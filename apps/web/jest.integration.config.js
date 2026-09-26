@@ -9,4 +9,7 @@ module.exports = {
   // these are exactly the files we want to match.
   testPathIgnorePatterns: ["/node_modules/"],
   testMatch: ["**/*.integration.test.[tj]s?(x)"],
+  // They share one test database (and some roll every migration back), so
+  // they run one file at a time.
+  maxWorkers: 1,
 };
