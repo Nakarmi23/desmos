@@ -1,6 +1,10 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import {
+  FIXTURE_ROLE_OPTIONS,
+  fetchFixtureUsers,
+} from "./users-fixture-adapter";
 import { UsersTable } from "./users-table";
 
 // Stand-in for the App Router: like Next, it re-renders `useSearchParams`
@@ -33,6 +37,11 @@ jest.mock("next/navigation", () => {
 
 beforeEach(() => window.history.replaceState(null, "", "/"));
 
+// The fixture-backed adapter, injected through the same seam the page uses.
+const FixtureUsersTable = () => (
+  <UsersTable fetcher={fetchFixtureUsers} roleOptions={FIXTURE_ROLE_OPTIONS} />
+);
+
 const firstColumnTexts = () =>
   screen
     .getAllByRole("row")
@@ -48,7 +57,7 @@ const loadedNames = () => {
 describe("UsersTable", () => {
   it("searches the fixture by name or email", async () => {
     const user = userEvent.setup();
-    render(<UsersTable />);
+    render(<FixtureUsersTable />);
     await screen.findByText("Ava Thompson");
 
     await user.type(
@@ -61,7 +70,7 @@ describe("UsersTable", () => {
 
   it("sorts the fixture by a column, both directions", async () => {
     const user = userEvent.setup();
-    render(<UsersTable />);
+    render(<FixtureUsersTable />);
     await screen.findByText("Ava Thompson");
     const nameHeader = screen.getByRole("columnheader", { name: "Name" });
 
@@ -111,7 +120,7 @@ describe("UsersTable", () => {
 
   it("narrows by Advanced Search filters, AND-ed with each other and Basic Search", async () => {
     const user = userEvent.setup();
-    render(<UsersTable />);
+    render(<FixtureUsersTable />);
     await screen.findByText("Ava Thompson");
 
     const roleEditor = await addFilter(user, /^Role/, "Role");
@@ -165,7 +174,7 @@ describe("UsersTable", () => {
 
   it("filters by operator: 'is none of' for roles, 'before' for created date", async () => {
     const user = userEvent.setup();
-    render(<UsersTable />);
+    render(<FixtureUsersTable />);
     await screen.findByText("Ava Thompson");
 
     const roleEditor = await addFilter(user, /^Role/, "Role");
@@ -223,7 +232,7 @@ describe("UsersTable", () => {
 
   it("selects users and offers Suspend", async () => {
     const user = userEvent.setup();
-    render(<UsersTable />);
+    render(<FixtureUsersTable />);
     await screen.findByText("Ava Thompson");
 
     await user.click(
@@ -245,7 +254,7 @@ describe("UsersTable", () => {
         "",
         "/?sort=-name&q=ava&f.role.in=admin",
       );
-      render(<UsersTable />);
+      render(<FixtureUsersTable />);
 
       await waitFor(() => expect(loadedNames()).toBe(true));
       expect(nameHeader()).toHaveAttribute("aria-sort", "descending");
@@ -261,7 +270,7 @@ describe("UsersTable", () => {
     it("writes each new view to the URL, keeping params it doesn't own", async () => {
       const user = userEvent.setup();
       window.history.replaceState(null, "", "/?tab=all");
-      render(<UsersTable />);
+      render(<FixtureUsersTable />);
       await screen.findByText("Ava Thompson");
 
       await user.click(screen.getByRole("button", { name: "Page 2" }));
@@ -282,7 +291,7 @@ describe("UsersTable", () => {
 
     it("tidies a URL it can't use into the view it opened on", async () => {
       window.history.replaceState(null, "", "/?page=abc&sort=nope&size=7");
-      render(<UsersTable />);
+      render(<FixtureUsersTable />);
       await screen.findByText("Ava Thompson");
 
       await waitFor(() => expect(window.location.search).toBe(""));
@@ -290,7 +299,7 @@ describe("UsersTable", () => {
 
     it("follows the URL when it changes from elsewhere, e.g. a nav link or Back", async () => {
       const user = userEvent.setup();
-      render(<UsersTable />);
+      render(<FixtureUsersTable />);
       await screen.findByText("Ava Thompson");
       await user.click(nameHeader());
       await waitFor(() => expect(window.location.search).toBe("?sort=name"));
@@ -308,7 +317,7 @@ describe("UsersTable", () => {
 
     it("ignores changes to query params it doesn't own", async () => {
       const user = userEvent.setup();
-      render(<UsersTable />);
+      render(<FixtureUsersTable />);
       await screen.findByText("Ava Thompson");
       await user.click(
         screen.getAllByRole("checkbox", { name: /^Select row / })[0],
@@ -325,7 +334,7 @@ describe("UsersTable", () => {
     it("keeps the URL's #hash when writing the view", async () => {
       const user = userEvent.setup();
       window.history.replaceState(null, "", "/?page=2#top");
-      render(<UsersTable />);
+      render(<FixtureUsersTable />);
       await screen.findByRole("button", { name: "Page 1" });
 
       await user.click(screen.getByRole("button", { name: "Page 1" }));

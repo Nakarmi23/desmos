@@ -1,46 +1,37 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { Table, type TableBulkAction } from "@/components/table/table";
 import type {
   TableColumn,
   TableFilterOption,
 } from "@/components/table/table-column";
 import type { TableFetcher } from "@/components/table/table-fetcher";
-import {
-  USERS,
-  type User,
-  type UserRole,
-  type UserStatus,
-} from "./users-fixture";
+import type { User, UserStatus } from "./users-fixture";
 import type { TableUrlConfig } from "@/components/table/table-url-state";
 import { useTableUrlState } from "@/components/table/use-table-url-state";
 import {
   DEFAULT_PAGE_SIZE,
   DEFAULT_PAGE_SIZE_OPTIONS,
 } from "@/components/table/table-view";
-import { windowFixture } from "@/components/table/window-fixture";
 
-// Record<..> makes the compiler flag a new role/status that has no label.
-const ROLE_LABELS: Record<UserRole, string> = {
-  admin: "Admin",
-  member: "Member",
-  viewer: "Viewer",
-};
-
+// Record<..> makes the compiler flag a new status that has no label.
 const STATUS_LABELS: Record<UserStatus, string> = {
   active: "Active",
   invited: "Invited",
   suspended: "Suspended",
 };
 
-const toOptions = (labels: Record<string, string>): TableFilterOption[] =>
-  Object.entries(labels).map(([value, label]) => ({ value, label }));
-
-const ROLE_OPTIONS = toOptions(ROLE_LABELS);
-const STATUS_OPTIONS = toOptions(STATUS_LABELS);
+const STATUS_OPTIONS: TableFilterOption[] = Object.entries(STATUS_LABELS).map(
+  ([value, label]) => ({ value, label }),
+);
 
 // Sorting, Basic Search (text columns) and Advanced Search all come from `type`.
-export const USER_COLUMNS: TableColumn<User>[] = [
+// Roles are data, not a fixed set, so their options come from the caller.
+export const userColumns = (
+  roleOptions: readonly TableFilterOption[],
+): TableColumn<User>[] => [
   { id: "name", header: "Name", type: "text", accessor: (user) => user.name },
   {
     id: "email",
@@ -52,7 +43,7 @@ export const USER_COLUMNS: TableColumn<User>[] = [
     id: "role",
     header: "Role",
     type: "enum",
-    options: ROLE_OPTIONS,
+    options: roleOptions,
     accessor: (user) => user.role,
   },
   {
@@ -70,37 +61,41 @@ export const USER_COLUMNS: TableColumn<User>[] = [
   },
 ];
 
-// Fixture-backed adapter for the fetcher contract (ADR 0004); swap for a
-// tRPC-backed one once a real Users DAL exists.
-const fetchUsers: TableFetcher<User> = async (page, pageSize, sort, filters) =>
-  windowFixture(USERS, USER_COLUMNS, page, pageSize, sort, filters);
-
 // Stub: no Users DAL yet, so Suspend has nothing to mutate. Wire to a tRPC
 // mutation once one exists.
 export const USER_BULK_ACTIONS: TableBulkAction[] = [
   { id: "suspend", label: "Suspend", onAction: () => {} },
 ];
 
-// One source for both the Table and the URL, so they agree on columns, page
-// sizes and (if one is added) the default sort.
-const TABLE_CONFIG: TableUrlConfig<User> = {
-  columns: USER_COLUMNS,
-  defaultPageSize: DEFAULT_PAGE_SIZE,
-  pageSizeOptions: DEFAULT_PAGE_SIZE_OPTIONS,
+export type UsersTableProps = {
+  /** Adapter for the fetcher contract (ADR 0004): fixture- or tRPC-backed. */
+  fetcher: TableFetcher<User>;
+  /** Choices for the Role column's Advanced Search filter. */
+  roleOptions: readonly TableFilterOption[];
 };
 
 // The page is a Server Component and functions can't cross the server→client
-// boundary, so the columns + fetcher are bound here, inside the client.
+// boundary, so callers bind the fetcher inside a client component.
 // Reads the URL, so it must render inside a <Suspense> boundary.
-export function UsersTable() {
-  const { key, initialView, onViewChange } = useTableUrlState(TABLE_CONFIG);
+export function UsersTable({ fetcher, roleOptions }: UsersTableProps) {
+  // One source for both the Table and the URL, so they agree on columns, page
+  // sizes and (if one is added) the default sort.
+  const config = useMemo<TableUrlConfig<User>>(
+    () => ({
+      columns: userColumns(roleOptions),
+      defaultPageSize: DEFAULT_PAGE_SIZE,
+      pageSizeOptions: DEFAULT_PAGE_SIZE_OPTIONS,
+    }),
+    [roleOptions],
+  );
+  const { key, initialView, onViewChange } = useTableUrlState(config);
   return (
     <Table
       key={key}
       initialView={initialView}
       onViewChange={onViewChange}
-      {...TABLE_CONFIG}
-      fetcher={fetchUsers}
+      {...config}
+      fetcher={fetcher}
       getRowId={(u) => u.id}
       bulkActions={USER_BULK_ACTIONS}
     />

@@ -2,15 +2,14 @@ import type { Meta, StoryObj } from "@storybook/nextjs";
 
 import { Table } from "./table";
 import type { TableFetcher } from "./table-fetcher";
+import { USER_BULK_ACTIONS, userColumns } from "@/components/users/users-table";
+import type { User } from "@/components/users/users-fixture";
 import {
-  USER_BULK_ACTIONS,
-  USER_COLUMNS,
-} from "@/components/users/users-table";
-import { USERS, type User } from "@/components/users/users-fixture";
-import { windowFixture } from "./window-fixture";
+  FIXTURE_ROLE_OPTIONS,
+  fetchFixtureUsers,
+} from "@/components/users/users-fixture-adapter";
 
-const populated: TableFetcher<User> = async (page, pageSize, sort, filters) =>
-  windowFixture(USERS, USER_COLUMNS, page, pageSize, sort, filters);
+const populated = fetchFixtureUsers;
 const pending: TableFetcher<User> = () => new Promise(() => {});
 const empty: TableFetcher<User> = async () => ({ rows: [], total: 0 });
 const failing: TableFetcher<User> = async () => {
@@ -21,7 +20,7 @@ const meta = {
   title: "Table",
   component: Table<User>,
   args: {
-    columns: USER_COLUMNS,
+    columns: userColumns(FIXTURE_ROLE_OPTIONS),
     fetcher: populated,
     getRowId: (u: User) => u.id,
   },
