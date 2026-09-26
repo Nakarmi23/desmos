@@ -5,6 +5,7 @@ import {
   normalizeEmail,
   normalizeUsername,
 } from "../../modules/users/normalize";
+import type { RoleRef } from "../../modules/users/user";
 import { createCaller } from "../caller";
 import { createContextInner } from "../context";
 
@@ -94,7 +95,7 @@ describe("users.list (integration)", () => {
         })),
       )
       .returning(["id", "username"]);
-    const roles: { id: string; name: string }[] = await db("roles")
+    const roles: RoleRef[] = await db("roles")
       .insert(EXTRA_ROLES.map((name) => ({ name })))
       .returning(["id", "name"]);
     const idOf = (list: { id: string }[], key: string, value: string) =>
@@ -254,7 +255,13 @@ describe("users.list (integration)", () => {
       expect(
         await filtered({ username: { operator: "startsWith", value: "li" } }),
       ).toEqual(["linus", "liskov"]);
-      // A missing email never matches.
+      // A missing email never matches, whatever the operator.
+      expect(
+        await filtered({ email: { operator: "contains", value: "e" } }),
+      ).toEqual(["ada", "grace", "liskov"]);
+      expect(
+        await filtered({ email: { operator: "eq", value: "ada@example.com" } }),
+      ).toEqual(["ada"]);
       expect(
         await filtered({ email: { operator: "endsWith", value: ".COM" } }),
       ).toEqual(["ada", "liskov"]);

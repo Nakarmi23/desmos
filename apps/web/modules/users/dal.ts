@@ -2,8 +2,10 @@ import type { Knex } from "knex";
 
 import { db } from "../../db";
 import type {
+  DateFilter,
+  TextFilter,
   UserColumnFilters,
-  UserListRow,
+  UserListFields,
   UserSort,
   UserSortColumn,
 } from "./user";
@@ -40,11 +42,12 @@ const LIST_COLUMNS = {
 
 /**
  * One page of Users plus the total across all pages, per the Table fetcher
- * contract (ADR 0004). Never selects the password hash.
+ * contract (ADR 0004), without the Roles they hold (see `service.ts`). Never
+ * selects the password hash.
  */
 export async function listUsers(
   query: ListUsersQuery,
-): Promise<{ rows: UserListRow[]; total: number }> {
+): Promise<{ rows: UserListFields[]; total: number }> {
   const matching = db("users")
     .where((where) => applySearch(where, query.search))
     .modify(applyColumnFilters, query.columns ?? {});
@@ -64,39 +67,10 @@ export async function listUsers(
     { column: "id", order: "asc" },
   ]);
 
-  const users: Omit<UserListRow, "roles">[] = await ordered
+  const rows: UserListFields[] = await ordered
     .limit(query.pageSize)
     .offset((query.page - 1) * query.pageSize);
-  const rolesByUser = await listRolesHeld(users.map((user) => user.id));
-  const rows = users.map((user) => ({
-    ...user,
-    roles: rolesByUser.get(user.id) ?? [],
-  }));
   return { rows, total: Number(count) };
-}
-
-// The Roles each User holds, by name. `user_roles` is a bare link table, so
-// it's joined here rather than owning a module (docs/modules-convention.md).
-async function listRolesHeld(
-  userIds: string[],
-): Promise<Map<string, UserListRow["roles"]>> {
-  const held: { userId: string; id: string; name: string }[] = await db(
-    "user_roles",
-  )
-    .join("roles", "roles.id", "user_roles.role_id")
-    .whereIn("user_roles.user_id", userIds)
-    .select({
-      userId: "user_roles.user_id",
-      id: "roles.id",
-      name: "roles.name",
-    })
-    .orderByRaw("lower(roles.name)");
-
-  const byUser = new Map<string, UserListRow["roles"]>();
-  for (const { userId, id, name } of held) {
-    byUser.set(userId, [...(byUser.get(userId) ?? []), { id, name }]);
-  }
-  return byUser;
 }
 
 /**
@@ -123,7 +97,8 @@ function applyColumnFilters(
     applyDateFilter(query, "created_at", filters.createdAt);
 
   // `in`: holds at least one of the Roles; `notIn`: holds none of them (so a
-  // User with no Roles matches `notIn` only).
+  // User with no Roles matches `notIn` only). A subquery of this one query,
+  // so it lives here rather than in the service with the Roles lookup.
   const roles = filters.roles;
   if (roles?.values.length) {
     const holdsAny = db("user_roles")
@@ -137,10 +112,12 @@ function applyColumnFilters(
 function applyTextFilter(
   query: Knex.QueryBuilder,
   column: string,
-  filter: NonNullable<UserColumnFilters["name"]>,
+  filter: TextFilter,
 ) {
-  const value = filter.value.trim();
-  if (!value) return;
+  // Blank is no constraint; otherwise the value is matched as given, as the
+  // fixture adapter does.
+  const value = filter.value;
+  if (!value.trim()) return;
   const escaped = escapeLike(value);
   switch (filter.operator) {
     case "eq":
@@ -163,7 +140,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 function applyDateFilter(
   query: Knex.QueryBuilder,
   column: string,
-  filter: NonNullable<UserColumnFilters["createdAt"]>,
+  filter: DateFilter,
 ) {
   // A `YYYY-MM-DD` day as the UTC instants it starts and ends (exclusive) at.
   const start = (day: string) => new Date(`${day}T00:00:00Z`);

@@ -10,7 +10,7 @@ import {
   DEFAULT_PAGE_SIZE,
   DEFAULT_PAGE_SIZE_OPTIONS,
 } from "@/components/table/table-view";
-import type { UserListRow, UserStatus } from "@/modules/users/user";
+import type { RoleRef, UserListRow, UserStatus } from "@/modules/users/user";
 
 // Record<..> makes the compiler flag a new status that has no label.
 const STATUS_LABELS: Record<UserStatus, string> = {
@@ -19,9 +19,7 @@ const STATUS_LABELS: Record<UserStatus, string> = {
 };
 
 /** A Role as an option for the Roles column: its id, labelled by name. */
-export const toRoleOptions = (
-  roles: readonly { id: string; name: string }[],
-): TableFilterOption[] =>
+export const toRoleOptions = (roles: readonly RoleRef[]): TableFilterOption[] =>
   roles.map(({ id, name }) => ({ value: id, label: name }));
 
 // Sorting, Basic Search (text columns) and Advanced Search come from `type`.

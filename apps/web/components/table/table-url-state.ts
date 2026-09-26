@@ -176,9 +176,15 @@ function parseScalar(
     const n = Number(text);
     return Number.isFinite(n) ? n : undefined;
   }
-  if (kind === "date")
-    return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : undefined;
+  if (kind === "date") return isRealDay(text) ? text : undefined;
   return text;
+}
+
+/** A `YYYY-MM-DD` day that exists on the calendar (not 2024-13-45). */
+function isRealDay(text: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+  const day = new Date(`${text}T00:00:00Z`);
+  return !Number.isNaN(day.getTime()) && day.toISOString().startsWith(text);
 }
 
 function sameSort(a: TableSort, b: TableSort): boolean {
