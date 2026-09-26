@@ -1,99 +1,61 @@
 import type { Knex } from "knex";
-import {
-  rawTableToKnexTable,
-  uuidDefault,
-  type DBColumn,
-  type DBTable,
-} from "@repo/db-core";
 
-const timestamps: DBColumn[] = [
-  { name: "created_at", type: { kind: "TIMESTAMPTZ" }, defaultValue: "now()" },
-  { name: "updated_at", type: { kind: "TIMESTAMPTZ" }, defaultValue: "now()" },
-];
-
-const roles: DBTable = {
-  name: "roles",
-  columns: [
-    uuidDefault,
-    // Shown as typed; uniqueness is case-insensitive via `name_key`.
-    { name: "name", type: { kind: "VARCHAR", length: 100 } },
-    {
-      name: "name_key",
-      type: { kind: "VARCHAR", length: 100 },
-      generated: { as: "lower(name)", type: "STORED" },
-      isUnique: true,
-    },
-    { name: "description", type: { kind: "TEXT" }, isNullable: true },
-    { name: "is_system", type: { kind: "BOOLEAN" }, defaultValue: "false" },
-    ...timestamps,
-  ],
-  constraints: [],
-};
-
-// `username` and `email` are stored lowercased (modules/users/normalize.ts), so
-// plain UNIQUE is case-insensitive. Postgres allows any number of NULL emails.
-const users: DBTable = {
-  name: "users",
-  columns: [
-    uuidDefault,
-    { name: "name", type: { kind: "VARCHAR", length: 200 } },
-    {
-      name: "username",
-      type: { kind: "VARCHAR", length: 100 },
-      isUnique: true,
-    },
-    {
-      name: "email",
-      type: { kind: "VARCHAR", length: 320 },
-      isNullable: true,
-      isUnique: true,
-    },
-    { name: "password_hash", type: { kind: "TEXT" } },
-    // `active` | `suspended`, validated by the app on write.
-    {
-      name: "status",
-      type: { kind: "VARCHAR", length: 20 },
-      defaultValue: "'active'",
-    },
-    { name: "is_initial", type: { kind: "BOOLEAN" }, defaultValue: "false" },
-    ...timestamps,
-  ],
-  constraints: [],
-};
-
-// Roles can't be deleted while held, and Users are never deleted.
-const userRoles: DBTable = {
-  name: "user_roles",
-  columns: [
-    {
-      name: "user_id",
-      type: { kind: "UUID" },
-      referencedTable: {
-        name: "users",
-        column: "id",
-        displayColumn: "name",
-        onDelete: "RESTRICT",
-      },
-    },
-    {
-      name: "role_id",
-      type: { kind: "UUID" },
-      referencedTable: {
-        name: "roles",
-        column: "id",
-        displayColumn: "name",
-        onDelete: "RESTRICT",
-      },
-      indexed: true,
-    },
-  ],
-  constraints: [{ type: "PRIMARY KEY", columns: ["user_id", "role_id"] }],
-};
+function timestamps(knex: Knex, table: Knex.CreateTableBuilder): void {
+  table
+    .timestamp("created_at", { useTz: true })
+    .notNullable()
+    .defaultTo(knex.fn.now());
+  table
+    .timestamp("updated_at", { useTz: true })
+    .notNullable()
+    .defaultTo(knex.fn.now());
+}
 
 export async function up(knex: Knex): Promise<void> {
-  for (const table of [roles, users, userRoles]) {
-    await rawTableToKnexTable(knex.schema, table);
-  }
+  await knex.schema.createTable("roles", (table) => {
+    table.uuid("id").primary().defaultTo(knex.fn.uuid());
+    table.string("name", 100).notNullable();
+    table.text("description");
+    table.boolean("is_system").notNullable().defaultTo(false);
+    timestamps(knex, table);
+  });
+  // Shown as typed, unique regardless of case.
+  await knex.raw(
+    "CREATE UNIQUE INDEX roles_name_lower_unique ON roles (lower(name))",
+  );
+
+  // `username` and `email` are stored lowercased (modules/users/normalize.ts),
+  // so plain UNIQUE is case-insensitive. Postgres allows any number of NULL
+  // emails.
+  await knex.schema.createTable("users", (table) => {
+    table.uuid("id").primary().defaultTo(knex.fn.uuid());
+    table.string("name", 200).notNullable();
+    table.string("username", 100).notNullable().unique();
+    table.string("email", 320).unique();
+    table.text("password_hash").notNullable();
+    // `active` | `suspended`, validated by the app on write.
+    table.string("status", 20).notNullable().defaultTo("active");
+    table.boolean("is_initial").notNullable().defaultTo(false);
+    timestamps(knex, table);
+  });
+
+  // Roles can't be deleted while held, and Users are never deleted.
+  await knex.schema.createTable("user_roles", (table) => {
+    table
+      .uuid("user_id")
+      .notNullable()
+      .references("id")
+      .inTable("users")
+      .onDelete("RESTRICT");
+    table
+      .uuid("role_id")
+      .notNullable()
+      .references("id")
+      .inTable("roles")
+      .onDelete("RESTRICT")
+      .index();
+    table.primary(["user_id", "role_id"]);
+  });
 }
 
 export async function down(knex: Knex): Promise<void> {

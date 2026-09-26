@@ -9,7 +9,7 @@ env — and giving it a live pool or feature DAL code would couple that reusable
 runtime concerns. There is only one consumer app today, so a separate `@repo/db` package would be
 premature indirection with no second consumer to justify it.
 
-**Consequences**: `apps/web` owns its own pool lifecycle, env schema, and data-access code, and takes
-`@repo/db-core` as a workspace dependency used only by migration files for schema lowering.
-`@repo/db-core` stays free of runtime/connection concerns. If a second app ever needs the same
+**Consequences**: `apps/web` owns its own pool lifecycle, env schema, and data-access code. The app's
+own (general) tables are written as plain Knex schema-builder migrations; `@repo/db-core`'s
+declarative `DBTable` lowering is reserved for dynamic modules' tables. `@repo/db-core` stays free of runtime/connection concerns. If a second app ever needs the same
 runtime machinery, that's the point to extract a shared `@repo/db` package — not before.
