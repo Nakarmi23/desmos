@@ -1,10 +1,7 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import {
-  FIXTURE_ROLE_OPTIONS,
-  fetchFixtureUsers,
-} from "./users-fixture-adapter";
+import { fetchFixtureUsers } from "./users-fixture-adapter";
 import { UsersTable } from "./users-table";
 
 // Stand-in for the App Router: like Next, it re-renders `useSearchParams`
@@ -38,9 +35,7 @@ jest.mock("next/navigation", () => {
 beforeEach(() => window.history.replaceState(null, "", "/"));
 
 // The fixture-backed adapter, injected through the same seam the page uses.
-const FixtureUsersTable = () => (
-  <UsersTable fetcher={fetchFixtureUsers} roleOptions={FIXTURE_ROLE_OPTIONS} />
-);
+const FixtureUsersTable = () => <UsersTable fetcher={fetchFixtureUsers} />;
 
 const firstColumnTexts = () =>
   screen
@@ -55,7 +50,7 @@ const loadedNames = () => {
 };
 
 describe("UsersTable", () => {
-  it("searches the fixture by name or email", async () => {
+  it("searches the fixture by name, username or email", async () => {
     const user = userEvent.setup();
     render(<FixtureUsersTable />);
     await screen.findByText("Ava Thompson");
@@ -66,6 +61,13 @@ describe("UsersTable", () => {
     );
 
     await waitFor(() => expect(firstColumnTexts()).toEqual(["Ava Thompson"]));
+
+    await user.clear(screen.getByRole("searchbox", { name: "Search" }));
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "LIAM.CHEN",
+    );
+    await waitFor(() => expect(firstColumnTexts()).toEqual(["Liam Chen"]));
   });
 
   it("sorts the fixture by a column, both directions", async () => {
@@ -96,138 +98,32 @@ describe("UsersTable", () => {
     );
   });
 
-  const cellsOf = (index: number) =>
-    screen
-      .getAllByRole("row")
-      .slice(1)
-      .map(
-        (row) => within(row).getAllByRole("gridcell")[index + 1].textContent,
-      );
-
-  async function addFilter(
-    user: ReturnType<typeof userEvent.setup>,
-    header: RegExp,
-    name: string,
-  ) {
-    await user.click(screen.getByRole("button", { name: "Add filter" }));
-    await user.click(
-      within(
-        screen.getByRole("dialog", { name: "Add filter options" }),
-      ).getByRole("button", { name: header }),
-    );
-    return screen.getByRole("dialog", { name: `${name} value` });
-  }
-
-  it("narrows by Advanced Search filters, AND-ed with each other and Basic Search", async () => {
-    const user = userEvent.setup();
+  it("shows name, username, email, Status and created, without Advanced Search", async () => {
     render(<FixtureUsersTable />);
     await screen.findByText("Ava Thompson");
 
-    const roleEditor = await addFilter(user, /^Role/, "Role");
-    await user.click(
-      within(roleEditor).getByRole("checkbox", { name: "Admin" }),
-    );
-    await user.click(
-      within(roleEditor).getByRole("checkbox", { name: "Viewer" }),
-    );
-    await waitFor(() => {
-      const roles = cellsOf(2);
-      expect(loadedNames()).toBe(true);
-      expect(roles.length).toBeGreaterThan(0);
-      expect(roles.every((r) => r === "Admin" || r === "Viewer")).toBe(true);
-    });
-    await user.keyboard("{Escape}");
-
-    const createdEditor = await addFilter(user, /^Created/, "Created");
-    await user.type(
-      within(createdEditor).getByLabelText("Created from"),
-      "2024-01-01",
-    );
-    await waitFor(() => {
-      const created = cellsOf(4);
-      expect(loadedNames()).toBe(true);
-      expect(created.length).toBeGreaterThan(0);
-      expect(created.every((d) => d! >= "2024-01-01")).toBe(true);
-      // The role filter still applies alongside the date range.
-      expect(cellsOf(2).every((r) => r === "Admin" || r === "Viewer")).toBe(
-        true,
-      );
-    });
-    await user.keyboard("{Escape}");
-
-    // Basic Search narrows further, on top of both filters.
-    await user.type(
-      screen.getByRole("searchbox", { name: "Search" }),
-      "daniel.andersen@",
-    );
-    await waitFor(() => expect(cellsOf(0)).toEqual(["Daniel Andersen"]));
-    expect(cellsOf(2)).toEqual(["Admin"]);
-
-    // A Basic Search hit outside the filters (Ava, created in 2023) is excluded.
-    await user.clear(screen.getByRole("searchbox", { name: "Search" }));
-    await user.type(
-      screen.getByRole("searchbox", { name: "Search" }),
-      "ava.thompson@",
-    );
-    expect(await screen.findByText("No results found")).toBeInTheDocument();
-  });
-
-  it("filters by operator: 'is none of' for roles, 'before' for created date", async () => {
-    const user = userEvent.setup();
-    render(<FixtureUsersTable />);
-    await screen.findByText("Ava Thompson");
-
-    const roleEditor = await addFilter(user, /^Role/, "Role");
-    await user.click(
-      within(roleEditor).getByRole("checkbox", { name: "Admin" }),
-    );
-    await user.keyboard("{Escape}");
-    await user.click(
-      within(screen.getByRole("group", { name: "Role filter" })).getByRole(
-        "button",
-        { name: /^Role operator/ },
-      ),
-    );
-    await user.click(
-      await screen.findByRole("menuitemradio", { name: "Is none of" }),
-    );
-    await waitFor(() => {
-      const roles = cellsOf(2);
-      expect(loadedNames()).toBe(true);
-      expect(roles.length).toBeGreaterThan(0);
-      expect(roles).not.toContain("Admin");
-    });
-
-    await addFilter(user, /^Created/, "Created");
-    await user.keyboard("{Escape}");
-    await user.click(
-      within(screen.getByRole("group", { name: "Created filter" })).getByRole(
-        "button",
-        { name: /^Created operator/ },
-      ),
-    );
-    await user.click(
-      await screen.findByRole("menuitemradio", { name: "Before" }),
-    );
-    await user.click(
-      within(screen.getByRole("group", { name: "Created filter" })).getByRole(
-        "button",
-        { name: /^Created value/ },
-      ),
-    );
-    await user.type(
-      within(
-        screen.getByRole("dialog", { name: "Created value" }),
-      ).getByLabelText("Created"),
-      "2023-12-31",
-    );
-    await waitFor(() => {
-      const created = cellsOf(4);
-      expect(loadedNames()).toBe(true);
-      expect(created.length).toBeGreaterThan(0);
-      expect(created.every((d) => d! < "2023-12-31")).toBe(true);
-      expect(cellsOf(2)).not.toContain("Admin");
-    });
+    expect(
+      screen.getAllByRole("columnheader").map((header) => header.textContent),
+    ).toEqual(["", "Name", "Username", "Email", "Status", "Created"]);
+    const ava = screen
+      .getByRole("gridcell", { name: "Ava Thompson" })
+      .closest("tr")!;
+    expect(
+      within(ava)
+        .getAllByRole("gridcell")
+        .slice(1)
+        .map((cell) => cell.textContent),
+    ).toEqual([
+      "Ava Thompson",
+      "ava.thompson",
+      "ava.thompson@example.com",
+      "Active",
+      "2023-02-14",
+    ]);
+    // users.list doesn't do Advanced Search yet.
+    expect(
+      screen.queryByRole("button", { name: "Add filter" }),
+    ).not.toBeInTheDocument();
   });
 
   it("selects users and offers Suspend", async () => {
@@ -249,11 +145,7 @@ describe("UsersTable", () => {
     const nameHeader = () => screen.getByRole("columnheader", { name: "Name" });
 
     it("opens on the view in the URL", async () => {
-      window.history.replaceState(
-        null,
-        "",
-        "/?sort=-name&q=ava&f.role.in=admin",
-      );
+      window.history.replaceState(null, "", "/?sort=-name&q=ava");
       render(<FixtureUsersTable />);
 
       await waitFor(() => expect(loadedNames()).toBe(true));
@@ -261,10 +153,7 @@ describe("UsersTable", () => {
       expect(screen.getByRole("searchbox", { name: "Search" })).toHaveValue(
         "ava",
       );
-      expect(
-        screen.getByRole("group", { name: "Role filter" }),
-      ).toBeInTheDocument();
-      expect(cellsOf(2).every((r) => r === "Admin")).toBe(true);
+      expect(firstColumnTexts().every((name) => /ava/i.test(name!))).toBe(true);
     });
 
     it("writes each new view to the URL, keeping params it doesn't own", async () => {
