@@ -269,7 +269,7 @@ describe("UsersTable", () => {
       window.history.replaceState(
         null,
         "",
-        "/?sort=-name&q=ava&f.roles.in=role_admin",
+        `/?sort=-name&q=ava&f.roles.in=${FIXTURE_ROLE_OPTIONS[0].value}`,
       );
       render(<FixtureUsersTable />);
 

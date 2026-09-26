@@ -9,6 +9,9 @@ export const USER_STATUSES = ["active", "suspended"] as const;
 /** A User's account state. */
 export type UserStatus = (typeof USER_STATUSES)[number];
 
+/** A Role as a User's holding shows it. */
+export type RoleRef = { id: string; name: string };
+
 /** A User as listed: never includes the password hash. */
 export type UserListRow = {
   id: string;
@@ -18,9 +21,12 @@ export type UserListRow = {
   status: UserStatus;
   isInitial: boolean;
   /** Every Role the User holds, by name; empty when none. */
-  roles: { id: string; name: string }[];
+  roles: RoleRef[];
   createdAt: Date;
 };
+
+/** A listed User's own fields, without the Roles they hold. */
+export type UserListFields = Omit<UserListRow, "roles">;
 
 /** The Users Table columns `users.list` can sort by. */
 export const USER_SORT_COLUMNS = [
@@ -80,6 +86,8 @@ export const userColumnFiltersSchema = z.strictObject({
 });
 
 export type UserColumnFilters = z.infer<typeof userColumnFiltersSchema>;
+export type TextFilter = z.infer<typeof textFilter>;
+export type DateFilter = z.infer<typeof dateFilter>;
 
 /** `users.list` input: the Table fetcher contract's arguments (ADR 0004). */
 export const usersListInputSchema = z.object({

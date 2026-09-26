@@ -6,12 +6,12 @@ import { windowFixture } from "./window-fixture";
 import type { TableFetcher } from "./table-fetcher";
 import { USER_BULK_ACTIONS } from "@/components/users/users-table";
 import {
+  FIXTURE_ROLE_OPTIONS,
   FIXTURE_USER_COLUMNS,
   fetchFixtureUsers,
 } from "@/components/users/users-fixture-adapter";
 import type { UserListRow } from "@/modules/users/user";
 
-const populated = fetchFixtureUsers;
 const pending: TableFetcher<UserListRow> = () => new Promise(() => {});
 const empty: TableFetcher<UserListRow> = async () => ({ rows: [], total: 0 });
 const failing: TableFetcher<UserListRow> = async () => {
@@ -23,7 +23,7 @@ const meta = {
   component: Table<UserListRow>,
   args: {
     columns: FIXTURE_USER_COLUMNS,
-    fetcher: populated,
+    fetcher: fetchFixtureUsers,
     getRowId: (u: UserListRow) => u.id,
   },
 } satisfies Meta<typeof Table<UserListRow>>;
@@ -50,7 +50,9 @@ export const EmptyWithFilters: Story = {
       sort: null,
       filters: {
         search: "nobody",
-        columns: { roles: { operator: "in", values: ["role_admin"] } },
+        columns: {
+          roles: { operator: "in", values: [FIXTURE_ROLE_OPTIONS[0].value] },
+        },
       },
     },
   },

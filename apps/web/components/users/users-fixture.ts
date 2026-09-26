@@ -1,18 +1,33 @@
-import type { UserListRow, UserStatus } from "@/modules/users/user";
+import type {
+  RoleRef,
+  UserListFields,
+  UserListRow,
+  UserStatus,
+} from "@/modules/users/user";
 
-type Role = UserListRow["roles"][number];
-
-const ADMINISTRATOR: Role = { id: "role_admin", name: "Administrator" };
-const MEMBER: Role = { id: "role_member", name: "Member" };
-const VIEWER: Role = { id: "role_viewer", name: "Viewer" };
+// UUIDs, like real Role ids, so a fixture filter is one `users.list` accepts.
+const ADMINISTRATOR: RoleRef = {
+  id: "00000000-0000-4000-8000-000000000001",
+  name: "Administrator",
+};
+const MEMBER: RoleRef = {
+  id: "00000000-0000-4000-8000-000000000002",
+  name: "Member",
+};
+const VIEWER: RoleRef = {
+  id: "00000000-0000-4000-8000-000000000003",
+  name: "Viewer",
+};
 
 /** The fixture's Roles (what `roles.list` would return). */
-export const FIXTURE_ROLES: readonly Role[] = [ADMINISTRATOR, MEMBER, VIEWER];
+export const FIXTURE_ROLES: readonly RoleRef[] = [
+  ADMINISTRATOR,
+  MEMBER,
+  VIEWER,
+];
 
-// Users without Roles yet; `USERS` hands them out by ROLE_PATTERN.
-type RolelessUser = Omit<UserListRow, "roles">;
-
-const HAND_WRITTEN_USERS: RolelessUser[] = [
+// `USERS` hands Roles out to these by ROLE_PATTERN.
+const HAND_WRITTEN_USERS: UserListFields[] = [
   {
     id: "usr_001",
     name: "Ava Thompson",
@@ -293,7 +308,7 @@ const STATUS_PATTERN: UserStatus[] = [
 
 // A repeating pattern of held Roles, mostly one, some several, some none. The
 // first User (the Initial User) holds Administrator.
-const ROLE_PATTERN: Role[][] = [
+const ROLE_PATTERN: RoleRef[][] = [
   [ADMINISTRATOR],
   [MEMBER],
   [VIEWER],
@@ -315,8 +330,8 @@ const FIRST_GENERATED_AT = Date.parse("2024-06-01T10:00:00Z");
 function generateUsers(
   count: number,
   taken: ReadonlySet<string>,
-): RolelessUser[] {
-  const users: RolelessUser[] = [];
+): UserListFields[] {
+  const users: UserListFields[] = [];
   const usernames = new Set(taken);
   for (let i = 0; users.length < count; i++) {
     const first = FIRST_NAMES[(i * 7) % FIRST_NAMES.length];
