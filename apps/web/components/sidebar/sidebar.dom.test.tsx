@@ -9,7 +9,7 @@ import { Sidebar } from "./sidebar";
 // `usePathname` has no router to read from outside a Next.js app, so pin it to
 // the first NAV_ITEMS href — the route the active-nav-item test asserts on.
 jest.mock("next/navigation", () => ({
-  usePathname: () => "/overview",
+  usePathname: () => "/",
 }));
 
 // The collapse toggle lives in `TopBar`, not `Sidebar` itself, so both render

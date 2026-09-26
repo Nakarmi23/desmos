@@ -7,7 +7,7 @@ import { SidebarProvider } from "./sidebar-provider";
 import { MobileSidebarDrawer } from "./mobile-sidebar-drawer";
 
 jest.mock("next/navigation", () => ({
-  usePathname: () => "/overview",
+  usePathname: () => "/",
 }));
 
 // `TopBar` (which owns the hamburger trigger) and `MobileSidebarDrawer` are

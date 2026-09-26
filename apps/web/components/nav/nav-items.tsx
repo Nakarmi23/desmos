@@ -37,7 +37,7 @@ export const NAV_SECTIONS: NavSection[] = [
     id: "main",
     label: "General",
     items: [
-      { href: "/overview", label: "Overview", icon: <Layers size={14} /> },
+      { href: "/", label: "Overview", icon: <Layers size={14} /> },
       { href: "/activity", label: "Activity", icon: <Activity size={14} /> },
       { href: "/health", label: "Health", icon: <HeartPulse size={14} /> },
       {
