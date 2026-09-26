@@ -41,7 +41,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/activity", label: "Activity", icon: <Activity size={14} /> },
       { href: "/health", label: "Health", icon: <HeartPulse size={14} /> },
       {
-        href: "/modules/users",
+        href: "/users",
         label: "Users",
         icon: <Users size={14} />,
       },

@@ -7,7 +7,7 @@ export function isNavItemActive(pathname: string, href: string): boolean {
 }
 
 // When multiple nav items match the current path (e.g. sibling items
-// "/modules" and "/modules/users"), only the most specific one — the longest
+// "/modules" and "/modules/orders"), only the most specific one — the longest
 // matching href — should render as active.
 export function getActiveHref(
   pathname: string,
