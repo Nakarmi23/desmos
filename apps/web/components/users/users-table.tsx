@@ -1,13 +1,16 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { Table, type TableBulkAction } from "@/components/table/table";
+import type { TableFilterOption } from "@/components/table/table-column";
 import type {
   TableFetcher,
   TableFetcherResult,
 } from "@/components/table/table-fetcher";
 import { useTableUrlState } from "@/components/table/use-table-url-state";
 import type { UserListRow } from "@/modules/users/user";
-import { USERS_TABLE_CONFIG } from "./users-table-config";
+import { usersTableConfig } from "./users-table-config";
 
 // Stub: there's no Suspend mutation yet. Wire to a tRPC mutation once one
 // exists.
@@ -20,20 +23,26 @@ export type UsersTableProps = {
   fetcher: TableFetcher<UserListRow>;
   /** `fetcher`'s result for the view in the URL on arrival, e.g. from the server. */
   initialData?: TableFetcherResult<UserListRow>;
+  /** Choices for the Roles column's filter (see `toRoleOptions`). */
+  roleOptions: readonly TableFilterOption[];
 };
 
 // The page is a Server Component and functions can't cross the server→client
 // boundary, so callers bind the fetcher inside a client component.
 // Reads the URL, so it must render inside a <Suspense> boundary.
-export function UsersTable({ fetcher, initialData }: UsersTableProps) {
-  const { key, initialView, onViewChange } =
-    useTableUrlState(USERS_TABLE_CONFIG);
+export function UsersTable({
+  fetcher,
+  initialData,
+  roleOptions,
+}: UsersTableProps) {
+  const config = useMemo(() => usersTableConfig(roleOptions), [roleOptions]);
+  const { key, initialView, onViewChange } = useTableUrlState(config);
   return (
     <Table
       key={key}
       initialView={initialView}
       onViewChange={onViewChange}
-      {...USERS_TABLE_CONFIG}
+      {...config}
       fetcher={fetcher}
       // Only the first mount opens on the view `initialData` was loaded for;
       // a remount (Back/Forward) is on another view.

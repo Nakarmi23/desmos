@@ -5,22 +5,13 @@ import type { TableColumn } from "./table-column";
 import { windowFixture } from "./window-fixture";
 import type { TableFetcher } from "./table-fetcher";
 import { USER_BULK_ACTIONS } from "@/components/users/users-table";
-import { USER_COLUMNS } from "@/components/users/users-table-config";
-import { USERS } from "@/components/users/users-fixture";
+import {
+  FIXTURE_USER_COLUMNS,
+  fetchFixtureUsers,
+} from "@/components/users/users-fixture-adapter";
 import type { UserListRow } from "@/modules/users/user";
 
-// The Users columns with Advanced Search on, which the Users Table itself
-// doesn't offer yet but the Table stories demonstrate.
-const COLUMNS: TableColumn<UserListRow>[] = USER_COLUMNS.map((column) =>
-  column.accessor ? { ...column, filter: true } : column,
-);
-
-const populated: TableFetcher<UserListRow> = async (
-  page,
-  pageSize,
-  sort,
-  filters,
-) => windowFixture(USERS, COLUMNS, page, pageSize, sort, filters);
+const populated = fetchFixtureUsers;
 const pending: TableFetcher<UserListRow> = () => new Promise(() => {});
 const empty: TableFetcher<UserListRow> = async () => ({ rows: [], total: 0 });
 const failing: TableFetcher<UserListRow> = async () => {
@@ -31,7 +22,7 @@ const meta = {
   title: "Table",
   component: Table<UserListRow>,
   args: {
-    columns: COLUMNS,
+    columns: FIXTURE_USER_COLUMNS,
     fetcher: populated,
     getRowId: (u: UserListRow) => u.id,
   },
@@ -59,7 +50,7 @@ export const EmptyWithFilters: Story = {
       sort: null,
       filters: {
         search: "nobody",
-        columns: { status: { operator: "in", values: ["suspended"] } },
+        columns: { roles: { operator: "in", values: ["role_admin"] } },
       },
     },
   },

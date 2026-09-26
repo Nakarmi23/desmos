@@ -9,6 +9,7 @@ export const usersRouter = router({
       pageSize: input.pageSize,
       sort: input.sort,
       search: input.filters.search,
+      columns: input.filters.columns,
     }),
   ),
 });

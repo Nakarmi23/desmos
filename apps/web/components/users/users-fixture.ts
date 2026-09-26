@@ -1,6 +1,18 @@
 import type { UserListRow, UserStatus } from "@/modules/users/user";
 
-const HAND_WRITTEN_USERS: UserListRow[] = [
+type Role = UserListRow["roles"][number];
+
+const ADMINISTRATOR: Role = { id: "role_admin", name: "Administrator" };
+const MEMBER: Role = { id: "role_member", name: "Member" };
+const VIEWER: Role = { id: "role_viewer", name: "Viewer" };
+
+/** The fixture's Roles (what `roles.list` would return). */
+export const FIXTURE_ROLES: readonly Role[] = [ADMINISTRATOR, MEMBER, VIEWER];
+
+// Users without Roles yet; `USERS` hands them out by ROLE_PATTERN.
+type RolelessUser = Omit<UserListRow, "roles">;
+
+const HAND_WRITTEN_USERS: RolelessUser[] = [
   {
     id: "usr_001",
     name: "Ava Thompson",
@@ -279,6 +291,22 @@ const STATUS_PATTERN: UserStatus[] = [
   "active",
 ];
 
+// A repeating pattern of held Roles, mostly one, some several, some none. The
+// first User (the Initial User) holds Administrator.
+const ROLE_PATTERN: Role[][] = [
+  [ADMINISTRATOR],
+  [MEMBER],
+  [VIEWER],
+  [MEMBER, VIEWER],
+  [MEMBER],
+  [],
+  [ADMINISTRATOR, MEMBER],
+  [VIEWER],
+  [MEMBER],
+  [VIEWER],
+  [MEMBER],
+];
+
 const TOTAL_USERS = 200;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const FIRST_GENERATED_AT = Date.parse("2024-06-01T10:00:00Z");
@@ -287,8 +315,8 @@ const FIRST_GENERATED_AT = Date.parse("2024-06-01T10:00:00Z");
 function generateUsers(
   count: number,
   taken: ReadonlySet<string>,
-): UserListRow[] {
-  const users: UserListRow[] = [];
+): RolelessUser[] {
+  const users: RolelessUser[] = [];
   const usernames = new Set(taken);
   for (let i = 0; users.length < count; i++) {
     const first = FIRST_NAMES[(i * 7) % FIRST_NAMES.length];
@@ -322,4 +350,4 @@ export const USERS: UserListRow[] = [
     TOTAL_USERS - HAND_WRITTEN_USERS.length,
     new Set(HAND_WRITTEN_USERS.map((user) => user.username)),
   ),
-];
+].map((user, i) => ({ ...user, roles: ROLE_PATTERN[i % ROLE_PATTERN.length] }));
