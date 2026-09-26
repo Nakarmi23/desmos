@@ -1,4 +1,7 @@
-import type { TableFilterOption } from "@/components/table/table-column";
+import {
+  toFilterOptions,
+  type TableFilterOption,
+} from "@/components/table/table-column";
 import type { TableFetcher } from "@/components/table/table-fetcher";
 import { windowFixture } from "@/components/table/window-fixture";
 import { USERS, type User, type UserRole } from "./users-fixture";
@@ -13,7 +16,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 /** The fixture's Roles, as options for the Users Table's Role filter. */
 export const FIXTURE_ROLE_OPTIONS: readonly TableFilterOption[] =
-  Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }));
+  toFilterOptions(ROLE_LABELS);
 
 const FIXTURE_COLUMNS = userColumns(FIXTURE_ROLE_OPTIONS);
 

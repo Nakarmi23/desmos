@@ -3,9 +3,10 @@
 import { useMemo } from "react";
 
 import { Table, type TableBulkAction } from "@/components/table/table";
-import type {
-  TableColumn,
-  TableFilterOption,
+import {
+  toFilterOptions,
+  type TableColumn,
+  type TableFilterOption,
 } from "@/components/table/table-column";
 import type { TableFetcher } from "@/components/table/table-fetcher";
 import type { User, UserStatus } from "./users-fixture";
@@ -23,9 +24,7 @@ const STATUS_LABELS: Record<UserStatus, string> = {
   suspended: "Suspended",
 };
 
-const STATUS_OPTIONS: TableFilterOption[] = Object.entries(STATUS_LABELS).map(
-  ([value, label]) => ({ value, label }),
-);
+const STATUS_OPTIONS = toFilterOptions(STATUS_LABELS);
 
 // Sorting, Basic Search (text columns) and Advanced Search all come from `type`.
 // Roles are data, not a fixed set, so their options come from the caller.

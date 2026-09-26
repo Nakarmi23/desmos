@@ -1,6 +1,10 @@
 import type { Knex } from "knex";
 
 import { parseInitialUserEnv } from "../initial-user-env";
+import {
+  normalizeEmail,
+  normalizeUsername,
+} from "../../modules/users/normalize";
 import { hashPassword } from "../../modules/users/password";
 
 const INITIAL_ROLE_NAME = "Administrator";
@@ -23,8 +27,8 @@ export async function up(knex: Knex): Promise<void> {
   const [user] = await knex("users")
     .insert({
       name: admin.name,
-      username: admin.username.toLowerCase(),
-      email: admin.email?.toLowerCase() ?? null,
+      username: normalizeUsername(admin.username),
+      email: normalizeEmail(admin.email),
       password_hash: await hashPassword(admin.password),
       status: "active",
       is_initial: true,
@@ -34,16 +38,14 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  const initialUsers = knex("users").where({ is_initial: true }).select("id");
-  const initialRoles = knex("roles")
-    .where({ name: INITIAL_ROLE_NAME, is_system: true })
-    .select("id");
+  const initialUsers = () => knex("users").where({ is_initial: true });
+  const initialRoles = () =>
+    knex("roles").where({ name: INITIAL_ROLE_NAME, is_system: true });
+
   await knex("user_roles")
-    .whereIn("user_id", initialUsers)
-    .orWhereIn("role_id", initialRoles)
+    .whereIn("user_id", initialUsers().select("id"))
+    .orWhereIn("role_id", initialRoles().select("id"))
     .delete();
-  await knex("users").where({ is_initial: true }).delete();
-  await knex("roles")
-    .where({ name: INITIAL_ROLE_NAME, is_system: true })
-    .delete();
+  await initialUsers().delete();
+  await initialRoles().delete();
 }
