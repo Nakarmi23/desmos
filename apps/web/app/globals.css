@@ -65,6 +65,25 @@
   --danger-12: #641723;
 }
 
+/*
+ * Inverse scope - a dark indigo region (the sidebar) inside the light app.
+ * `@theme inline` utilities resolve straight to the raw scale vars, so
+ * remapping those here restyles every `bg-surface`/`text-text`/... inside
+ * the element without per-component dark classes. Values from Radix
+ * indigoDark. Portaled popups (e.g. the user menu) render outside it and
+ * stay light.
+ */
+.theme-inverse {
+  --slate-1: #182449;
+  --slate-2: #1d2e62;
+  --slate-4: #253974;
+  --slate-6: #304384;
+  --slate-11: #9eb1ff;
+  --slate-12: #eef1ff;
+  --accent-3: #3a4f97;
+  --accent-11: #ffffff;
+}
+
 @theme inline {
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono:
