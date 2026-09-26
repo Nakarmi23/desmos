@@ -2097,3 +2097,49 @@ describe("Table initial data", () => {
     expect(screen.queryByText("No results found")).not.toBeInTheDocument();
   });
 });
+
+describe("Table empty cells", () => {
+  type Sparse = { id: string; name: string | null; tags: string[] };
+  const sparseColumns: TableColumn<Sparse>[] = [
+    { id: "name", header: "Name", type: "text", accessor: (r) => r.name },
+    {
+      id: "tags",
+      header: "Tags",
+      type: "multiEnum",
+      options: [{ value: "a", label: "A" }],
+      accessor: (r) => r.tags,
+    },
+  ];
+
+  it("fills a missing value, or an empty list, with a dash rather than leaving it blank", async () => {
+    render(
+      <Table
+        columns={sparseColumns}
+        fetcher={async () => ({
+          rows: [
+            { id: "1", name: "Ada", tags: ["a"] },
+            { id: "2", name: null, tags: [] },
+            { id: "3", name: "", tags: [] },
+          ],
+          total: 3,
+        })}
+        getRowId={(r) => r.id}
+      />,
+    );
+    await screen.findByText("Ada");
+
+    const cells = screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) =>
+        within(row)
+          .getAllByRole("gridcell")
+          .map((cell) => cell.textContent),
+      );
+    expect(cells).toEqual([
+      ["Ada", "A"],
+      ["—", "—"],
+      ["—", "—"],
+    ]);
+  });
+});

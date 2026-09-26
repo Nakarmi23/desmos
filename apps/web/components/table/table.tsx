@@ -662,7 +662,7 @@ function toColumnDefs<T extends RowData>(
             column.type === "multiEnum" ? (
               <ValueChips values={getValue()} options={column.options} />
             ) : (
-              formatValue(getValue(), column.options)
+              <CellText value={formatValue(getValue(), column.options)} />
             ),
         };
   });
@@ -687,7 +687,7 @@ function ValueChips({
   values: unknown;
   options: readonly TableFilterOption[];
 }) {
-  if (!Array.isArray(values) || values.length === 0) return null;
+  if (!Array.isArray(values) || values.length === 0) return <EmptyValue />;
   const styles = tableStyles();
   return (
     <ul className={styles.valueChips()}>
@@ -698,6 +698,16 @@ function ValueChips({
       ))}
     </ul>
   );
+}
+
+function CellText({ value }: { value: string }) {
+  return value.trim() === "" ? <EmptyValue /> : value;
+}
+
+// A cell with nothing in it (no value, an empty list) says so rather than
+// looking unfinished.
+function EmptyValue() {
+  return <span className={tableStyles().emptyValue()}>—</span>;
 }
 
 // `enum` cells show their option's label, as the Advanced Search select does.

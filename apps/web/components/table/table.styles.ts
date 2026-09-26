@@ -34,6 +34,7 @@ export const tableStyles = tv({
       "text-text-subtle opacity-50 data-[sorted]:text-text data-[sorted]:opacity-100",
     headerContent: "inline-flex items-center gap-1",
     cell: "border-b border-r border-border px-3 py-1.5 last:border-r-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-border-selected data-[align=right]:text-right data-[align=left]:text-left",
+    emptyValue: "text-text-subtle",
     valueChips: "flex flex-wrap gap-1",
     valueChip:
       "inline-flex items-center rounded-full border border-border bg-surface-sunken px-2 text-xs leading-5 text-text",
