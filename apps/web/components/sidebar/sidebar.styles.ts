@@ -10,7 +10,7 @@ export const sidebarStyles = tv({
     // `hidden lg:flex` is the desktop/mobile split: below `lg` the off-canvas
     // `MobileSidebarDrawer` takes over instead.
     root: [
-      "group hidden h-vh shrink-0 flex-col overflow-hidden border-r border-border bg-surface lg:flex",
+      "theme-inverse group hidden h-vh shrink-0 flex-col overflow-hidden border-r border-border bg-surface lg:flex",
       "transition-[width] duration-200 ease-out",
       "data-[open]:w-56 data-[closed]:w-14",
     ],
@@ -21,7 +21,7 @@ export const sidebarStyles = tv({
       "group-data-[open]:gap-2.5 group-data-[closed]:justify-center",
     ],
     brandGlyph:
-      "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-background-neutral-hovered text-sm font-medium text-text",
+      "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-background-brand text-sm font-medium text-text-inverse",
     // Unlike the nav labels below, the brand label is a `Collapsible.Panel`,
     // so it carries `data-open` / `data-closed` directly.
     brandLabelPanel: [
@@ -132,7 +132,7 @@ export const sidebarStyles = tv({
       "data-[starting-style]:opacity-0 data-[ending-style]:opacity-0",
     ],
     drawerPopup: [
-      "fixed inset-y-0 left-0 z-40 flex h-vh w-64 flex-col overflow-hidden bg-surface shadow-lg lg:hidden",
+      "theme-inverse fixed inset-y-0 left-0 z-40 flex h-vh w-64 flex-col overflow-hidden bg-surface shadow-lg lg:hidden",
       "transition-transform duration-200 ease-out",
       "data-[starting-style]:-translate-x-full data-[ending-style]:-translate-x-full",
     ],
