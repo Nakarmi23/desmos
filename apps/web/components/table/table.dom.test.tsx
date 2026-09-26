@@ -191,6 +191,37 @@ describe("Table", () => {
     );
   });
 
+  it("shows an enum cell as its option's label, falling back to the raw value", async () => {
+    const withEnum: TableColumn<Row>[] = [
+      {
+        id: "tier",
+        header: "Tier",
+        type: "enum",
+        options: [{ value: "Ada", label: "Pioneer" }, { value: "Grace" }],
+        accessor: (r) => r.name,
+        ...PLAIN,
+      },
+    ];
+    render(
+      <Table
+        columns={withEnum}
+        fetcher={async () => ({
+          rows: [...rows, { id: "3", name: "Linus", age: 30 }],
+          total: 3,
+        })}
+        getRowId={(r) => r.id}
+      />,
+    );
+
+    await screen.findByText("Linus");
+    const cells = screen.getAllByRole("gridcell");
+    expect(cells.map((cell) => cell.textContent)).toEqual([
+      "Pioneer",
+      "Grace",
+      "Linus",
+    ]);
+  });
+
   it("shows an empty state when the fetcher returns no rows", async () => {
     const fetcher: TableFetcher<Row> = async () => ({ rows: [], total: 0 });
     renderTable(fetcher);

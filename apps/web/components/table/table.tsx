@@ -22,6 +22,7 @@ import {
   resolveColumn,
   type ResolvedTableColumn,
   type TableColumn,
+  type TableFilterOption,
 } from "./table-column";
 import type { TableFetcher, TableSort } from "./table-fetcher";
 import { TableAdvancedSearch } from "./table-advanced-search";
@@ -633,7 +634,7 @@ function toColumnDefs<T extends RowData>(
           header: column.header,
           accessorFn: column.accessor,
           enableSorting: column.sortable,
-          cell: ({ getValue }) => formatValue(getValue()),
+          cell: ({ getValue }) => formatValue(getValue(), column.options),
         };
   });
   if (!withSelectColumn) return defs;
@@ -649,8 +650,14 @@ function toColumnDefs<T extends RowData>(
   ];
 }
 
-function formatValue(value: unknown): string {
+// `enum` cells show their option's label, as the Advanced Search select does.
+function formatValue(
+  value: unknown,
+  options?: readonly TableFilterOption[],
+): string {
   if (value == null) return "";
+  const option = options?.find((o) => o.value === value);
+  if (option) return option.label ?? option.value;
   if (value instanceof Date) return value.toISOString().slice(0, 10);
   return String(value);
 }
