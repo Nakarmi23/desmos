@@ -77,6 +77,23 @@ describe("resolveColumn", () => {
     });
   });
 
+  it("gives a multiEnum column a select filter, never sorting or Basic Search", () => {
+    const column = resolveColumn<{ roles: string[] }>({
+      id: "roles",
+      header: "Roles",
+      type: "multiEnum",
+      options: roleOptions,
+      accessor: (r) => r.roles,
+      sortable: true,
+      searchable: true,
+    });
+    expect(column).toMatchObject({
+      sortable: false,
+      searchable: false,
+      filter: { kind: "select", options: roleOptions },
+    });
+  });
+
   it("lets every default be overridden", () => {
     const column = resolveColumn<Row>({
       id: "name",

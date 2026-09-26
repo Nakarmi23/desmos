@@ -84,9 +84,11 @@ function matchesFilter(
     case "in":
     case "notIn": {
       if (filter.values.length === 0) return true;
-      return (
-        filter.values.includes(String(cell)) === (filter.operator === "in")
-      );
+      // A multi-value cell matches `in` if it holds any chosen value, `notIn`
+      // if it holds none — so an empty list only ever matches `notIn`.
+      const held = Array.isArray(cell) ? cell.map(String) : [String(cell)];
+      const holdsAny = held.some((value) => filter.values.includes(value));
+      return holdsAny === (filter.operator === "in");
     }
     case "between":
       return matchesRange(kind, cell, filter.from, filter.to);

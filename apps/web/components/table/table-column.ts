@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 
-/** `enum` columns hold one of a known set of `options`. */
-export type TableColumnType = "text" | "number" | "date" | "enum";
+/**
+ * `enum` columns hold one of a known set of `options`; `multiEnum` columns
+ * hold a list of them (e.g. a User's Roles).
+ */
+export type TableColumnType = "text" | "number" | "date" | "enum" | "multiEnum";
 
 export type TableColumnAlign = "left" | "right";
 
@@ -14,7 +17,7 @@ export type TableColumnBase = {
   width?: number | string;
 } & (
   | { type: "text" | "number" | "date"; options?: never }
-  | { type: "enum"; options: readonly TableFilterOption[] }
+  | { type: "enum" | "multiEnum"; options: readonly TableFilterOption[] }
 );
 
 /** Which Advanced Search control a column gets. */
@@ -71,8 +74,10 @@ export function resolveColumnAlign(column: {
 
 /**
  * Fills in what `type` implies: any `accessor` column sorts and gets the
- * Advanced Search control for its type (`enum` -> select over its options);
- * only `text` columns join Basic Search. Explicit settings win.
+ * Advanced Search control for its type (`enum`/`multiEnum` -> select over its
+ * options); only `text` columns join Basic Search. Explicit settings win,
+ * except that a `multiEnum` column never sorts or joins Basic Search (a list
+ * has no single order or text).
  */
 export function resolveColumn<T>(
   column: TableColumn<T>,
@@ -87,14 +92,18 @@ export function resolveColumn<T>(
   return {
     ...column,
     align: resolveColumnAlign(column),
-    sortable: hasValue && (column.sortable ?? true),
-    searchable: hasValue && (column.searchable ?? column.type === "text"),
+    sortable:
+      hasValue && column.type !== "multiEnum" && (column.sortable ?? true),
+    searchable:
+      hasValue &&
+      column.type !== "multiEnum" &&
+      (column.searchable ?? column.type === "text"),
     filter,
   } as ResolvedTableColumn<T>;
 }
 
 function defaultFilter(column: TableColumnBase): TableColumnFilter {
-  return column.type === "enum"
+  return column.type === "enum" || column.type === "multiEnum"
     ? { kind: "select", options: column.options }
     : { kind: column.type };
 }
