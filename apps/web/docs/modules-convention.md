@@ -1,8 +1,9 @@
 # Module / DAL convention for DB-backed features
 
 This is the agreed shape every future DB-backed feature in `apps/web` follows, so the first real
-feature doesn't have to re-litigate where its data-access code goes. No `modules/` folders exist
-yet — they're created lazily by the first feature that needs one, not scaffolded ahead of time.
+feature doesn't have to re-litigate where its data-access code goes. `modules/` folders are
+created lazily by the first feature that needs one, not scaffolded ahead of time (`modules/users/`
+and `modules/roles/` are the first).
 
 ## `modules/<feature>/{dal.ts, service.ts}`
 
@@ -26,6 +27,10 @@ no SQL of their own.
 - **A bare linking table** — two foreign keys, no attributes of its own — stays **inline in the
   service of whichever module needs it**. It does not get its own module and it is never dumped into
   a generic `shared/`.
+  - Exception: when the link only narrows **one query** of the module's DAL (e.g. an `EXISTS`
+    subquery filtering Users by the Roles they hold), it stays inside that DAL query — splitting a
+    single SQL statement across the DAL and the service isn't possible. Reading the link's rows
+    (e.g. "which Roles does each User hold") still goes in the service.
 - When a **second consumer** appears, that bare join table is **promoted to its own small module
   named for the relationship** (name it for what the link means, not `shared/`), so both consumers
   import the same access functions instead of duplicating them.
