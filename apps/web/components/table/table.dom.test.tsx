@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { TableColumn, TableColumnFilter } from "./table-column";
 import type { TableFetcher } from "./table-fetcher";
 import { Table } from "./table";
+import { windowFixture } from "./window-fixture";
 
 type Row = { id: string; name: string; age: number };
 
@@ -1932,5 +1933,114 @@ describe("Table view state", () => {
       .map(([view]) => view.filters.search)
       .filter(Boolean);
     expect(searches).toEqual(["ada"]);
+  });
+});
+
+describe("Table multi-value enum column", () => {
+  type Holder = { id: string; name: string; roles: string[] };
+
+  const holders: Holder[] = [
+    { id: "1", name: "Ada", roles: ["admin", "viewer"] },
+    { id: "2", name: "Grace", roles: ["viewer"] },
+    { id: "3", name: "Linus", roles: [] },
+    { id: "4", name: "Ken", roles: ["admin", "custom"] },
+  ];
+
+  const holderColumns: TableColumn<Holder>[] = [
+    {
+      id: "name",
+      header: "Name",
+      type: "text",
+      accessor: (h) => h.name,
+      ...PLAIN,
+    },
+    {
+      id: "roles",
+      header: "Roles",
+      type: "multiEnum",
+      options: [
+        { value: "admin", label: "Admin" },
+        { value: "viewer", label: "Viewer" },
+      ],
+      accessor: (h) => h.roles,
+    },
+  ];
+
+  function renderHolders() {
+    render(
+      <Table
+        columns={holderColumns}
+        fetcher={async (page, pageSize, sort, filters) =>
+          windowFixture(holders, holderColumns, page, pageSize, sort, filters)
+        }
+        getRowId={(h) => h.id}
+      />,
+    );
+    return screen.findByText("Ada");
+  }
+
+  const chipsIn = (name: string) => {
+    const row = screen.getByRole("gridcell", { name }).closest("tr")!;
+    const cell = within(row).getAllByRole("gridcell")[1];
+    return within(cell)
+      .queryAllByRole("listitem")
+      .map((chip) => chip.textContent);
+  };
+
+  const names = () =>
+    screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => within(row).getAllByRole("gridcell")[0].textContent);
+
+  it("renders every value as a chip, by option label, falling back to the raw value", async () => {
+    await renderHolders();
+
+    expect(chipsIn("Ada")).toEqual(["Admin", "Viewer"]);
+    expect(chipsIn("Grace")).toEqual(["Viewer"]);
+    expect(chipsIn("Linus")).toEqual([]);
+    expect(chipsIn("Ken")).toEqual(["Admin", "custom"]);
+  });
+
+  it("can't be sorted and doesn't join Basic Search", async () => {
+    await renderHolders();
+
+    expect(
+      screen.getByRole("columnheader", { name: "Roles" }),
+    ).not.toHaveAttribute("aria-sort");
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+  });
+
+  it("filters with 'is any of' / 'is none of' over each row's values", async () => {
+    const user = userEvent.setup();
+    await renderHolders();
+
+    await user.click(screen.getByRole("button", { name: "Add filter" }));
+    await user.click(
+      within(
+        screen.getByRole("dialog", { name: "Add filter options" }),
+      ).getByRole("button", { name: /^Roles/ }),
+    );
+    await user.click(
+      within(screen.getByRole("dialog", { name: "Roles value" })).getByRole(
+        "checkbox",
+        { name: "Admin" },
+      ),
+    );
+    await waitFor(() => expect(names()).toEqual(["Ada", "Ken"]));
+    await user.keyboard("{Escape}");
+
+    await user.click(
+      within(screen.getByRole("group", { name: "Roles filter" })).getByRole(
+        "button",
+        { name: /^Roles operator/ },
+      ),
+    );
+    await user.click(
+      await screen.findByRole("menuitemradio", { name: "Is none of" }),
+    );
+
+    // A row with no values holds none of them.
+    await waitFor(() => expect(names()).toEqual(["Grace", "Linus"]));
   });
 });

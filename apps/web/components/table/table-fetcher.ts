@@ -27,7 +27,10 @@ export type TableFilterOperator =
  * - `number` -> `eq` / `neq` / `lt` / `lte` / `gt` / `gte` / `between`
  * - `date`   -> `eq` / `lt` / `lte` / `gt` / `gte` / `between`; values are
  *               `YYYY-MM-DD` UTC days, so `lte`/`between` include the whole day
- * - `select` -> `in` (equals any of `values`) / `notIn` (equals none of them)
+ * - `select` -> `in` (equals any of `values`) / `notIn` (equals none of them);
+ *               on a `multiEnum` column, `in` = the row holds at least one of
+ *               `values`, `notIn` = it holds none (an empty list matches only
+ *               `notIn`)
  * `between` bounds are inclusive and either may be omitted. Empty values
  * (blank text, no number/date, no selection) are never sent. A row whose cell
  * is missing (null/blank/unparseable) never matches a number/date comparison,

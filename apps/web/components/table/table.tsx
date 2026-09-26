@@ -634,7 +634,12 @@ function toColumnDefs<T extends RowData>(
           header: column.header,
           accessorFn: column.accessor,
           enableSorting: column.sortable,
-          cell: ({ getValue }) => formatValue(getValue(), column.options),
+          cell: ({ getValue }) =>
+            column.type === "multiEnum" ? (
+              <ValueChips values={getValue()} options={column.options} />
+            ) : (
+              formatValue(getValue(), column.options)
+            ),
         };
   });
   if (!withSelectColumn) return defs;
@@ -648,6 +653,27 @@ function toColumnDefs<T extends RowData>(
     },
     ...defs,
   ];
+}
+
+// `multiEnum` cells: one wrapping chip per value.
+function ValueChips({
+  values,
+  options,
+}: {
+  values: unknown;
+  options: readonly TableFilterOption[];
+}) {
+  if (!Array.isArray(values) || values.length === 0) return null;
+  const styles = tableStyles();
+  return (
+    <ul className={styles.valueChips()}>
+      {values.map((value) => (
+        <li key={String(value)} className={styles.valueChip()}>
+          {formatValue(value, options)}
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 // `enum` cells show their option's label, as the Advanced Search select does.

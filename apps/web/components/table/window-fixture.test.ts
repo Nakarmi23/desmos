@@ -306,6 +306,49 @@ describe("windowFixture column filters (Advanced Search)", () => {
     });
   });
 
+  describe("multi-value select", () => {
+    type Holder = { id: string; roles: string[] };
+    const holders: Holder[] = [
+      { id: "1", roles: ["admin"] },
+      { id: "2", roles: ["member", "viewer"] },
+      { id: "3", roles: [] },
+      { id: "4", roles: ["admin", "viewer"] },
+    ];
+    const holderColumns: TableColumn<Holder>[] = [
+      {
+        id: "roles",
+        header: "Roles",
+        type: "multiEnum",
+        options: [{ value: "admin" }, { value: "member" }, { value: "viewer" }],
+        accessor: (h) => h.roles,
+      },
+    ];
+    const holderIds = (value: TableColumnFilterValue) =>
+      windowFixture(holders, holderColumns, 1, 10, null, {
+        columns: { roles: value },
+      }).rows.map((h) => h.id);
+
+    it("in keeps rows holding at least one chosen value, never an empty list", () => {
+      expect(holderIds({ operator: "in", values: ["viewer"] })).toEqual([
+        "2",
+        "4",
+      ]);
+      expect(
+        holderIds({ operator: "in", values: ["admin", "member"] }),
+      ).toEqual(["1", "2", "4"]);
+    });
+
+    it("notIn keeps rows holding none of the chosen values, empty lists included", () => {
+      expect(holderIds({ operator: "notIn", values: ["admin"] })).toEqual([
+        "2",
+        "3",
+      ]);
+      expect(
+        holderIds({ operator: "notIn", values: ["admin", "member", "viewer"] }),
+      ).toEqual(["3"]);
+    });
+  });
+
   describe("missing and malformed cells", () => {
     type Loose = { id: string; score: unknown; when: unknown };
     const loose: Loose[] = [
