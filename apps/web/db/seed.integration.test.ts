@@ -1,5 +1,7 @@
 import { verify } from "@node-rs/argon2";
 
+import { createCaller } from "../trpc/caller";
+import { createContextInner } from "../trpc/context";
 import { db, destroyPool } from "./index";
 
 const INITIAL_ADMIN_VARS = [
@@ -21,7 +23,8 @@ async function migrateFromEmpty() {
   return run as string[];
 }
 
-const initialRoles = () => db("roles").select();
+const listRoles = async () =>
+  createCaller(await createContextInner()).roles.list();
 const initialUsers = () => db("users").select();
 
 describe("Initial Role and Initial User seed (integration)", () => {
@@ -38,8 +41,8 @@ describe("Initial Role and Initial User seed (integration)", () => {
     });
 
     it("creates exactly one Initial Role: Administrator, a System Role", async () => {
-      expect(await initialRoles()).toEqual([
-        expect.objectContaining({ name: "Administrator", is_system: true }),
+      expect(await listRoles()).toEqual([
+        expect.objectContaining({ name: "Administrator", isSystem: true }),
       ]);
     });
 
@@ -55,7 +58,7 @@ describe("Initial Role and Initial User seed (integration)", () => {
         }),
       ]);
 
-      const [role] = await initialRoles();
+      const [role] = await listRoles();
       expect(await db("user_roles").select()).toEqual([
         { user_id: users[0].id, role_id: role.id },
       ]);
@@ -77,7 +80,7 @@ describe("Initial Role and Initial User seed (integration)", () => {
       const [, run] = await db.migrate.latest();
 
       expect(run).toEqual([]);
-      expect(await initialRoles()).toHaveLength(1);
+      expect(await listRoles()).toHaveLength(1);
       expect(await initialUsers()).toHaveLength(1);
     });
   });

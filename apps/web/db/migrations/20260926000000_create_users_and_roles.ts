@@ -30,8 +30,8 @@ const roles: DBTable = {
   constraints: [],
 };
 
-// `username` and `email` are stored lowercased by the app, so plain UNIQUE is
-// case-insensitive. Postgres allows any number of NULL emails.
+// `username` and `email` are stored lowercased (modules/users/normalize.ts), so
+// plain UNIQUE is case-insensitive. Postgres allows any number of NULL emails.
 const users: DBTable = {
   name: "users",
   columns: [

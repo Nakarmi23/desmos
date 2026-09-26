@@ -10,6 +10,12 @@ export type TableColumnAlign = "left" | "right";
 
 export type TableFilterOption = { value: string; label?: string };
 
+/** Options from a `value -> label` map, in the map's order. */
+export const toFilterOptions = (
+  labels: Record<string, string>,
+): TableFilterOption[] =>
+  Object.entries(labels).map(([value, label]) => ({ value, label }));
+
 export type TableColumnBase = {
   id: string;
   header: string;
