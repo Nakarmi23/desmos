@@ -9,8 +9,9 @@ import { parseDbEnv } from "./env";
  * connection is opened here — this only describes how to connect and where
  * migrations live. The env is read when a connection is first opened, not at
  * import, so importing the pool (e.g. while `next build` collects page data)
- * needs no DB env; the boot check in `instrumentation.ts` still fails fast. All migrations share one flat `db/migrations/` directory so
- * migration history stays a single, simply-ordered timeline.
+ * needs no DB env; the boot check in `instrumentation.ts` still fails fast.
+ * All migrations share one flat `db/migrations/` directory so migration
+ * history stays a single, simply-ordered timeline.
  */
 const config: Knex.Config = {
   client: "pg",
