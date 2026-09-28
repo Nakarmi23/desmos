@@ -6,7 +6,13 @@ import { createContextInner } from "./context";
 /** A caller signed in as some User; the procedures only need one to exist. */
 export async function signedInCaller() {
   return createCaller(
-    await createContextInner({ user: { id: "a-signed-in-user" } }),
+    await createContextInner({
+      user: {
+        id: "a-signed-in-user",
+        name: "Signed In",
+        username: "signed-in",
+      },
+    }),
   );
 }
 

@@ -333,4 +333,60 @@ describe("auth (integration)", () => {
       await expect(refresh(refreshToken)).resolves.toBeNull();
     });
   });
+
+  describe("signOut", () => {
+    const signOut = (refreshToken: string) =>
+      authCaller().signOut({ refreshToken });
+    const validate = (accessToken: string) =>
+      authCaller().validate({ accessToken });
+
+    it("ends only the Session it's given; the User's others keep working", async () => {
+      const userId = await createUser("two-browsers");
+      const credentials = { username: "two-browsers", password: PASSWORD };
+      const laptop = await signIn(credentials);
+      const phone = await signIn(credentials);
+
+      await signOut(laptop.refreshToken);
+
+      await expect(validate(laptop.accessToken)).resolves.toBeNull();
+      await expect(
+        authCaller().refresh({ refreshToken: laptop.refreshToken }),
+      ).resolves.toBeNull();
+      await expect(validate(phone.accessToken)).resolves.toEqual({ userId });
+    });
+
+    it("ends the Session from the refresh token it just replaced, too", async () => {
+      await createUser("mid-refresh");
+      const session = await signIn({
+        username: "mid-refresh",
+        password: PASSWORD,
+      });
+      const next = (await authCaller().refresh({
+        refreshToken: session.refreshToken,
+      }))!;
+
+      await signOut(session.refreshToken);
+
+      await expect(validate(next.accessToken)).resolves.toBeNull();
+    });
+
+    it("ends the Session from its access token when there's no refresh token", async () => {
+      await createUser("access-only");
+      const credentials = { username: "access-only", password: PASSWORD };
+      const session = await signIn(credentials);
+      const other = await signIn(credentials);
+
+      await authCaller().signOut({ accessToken: session.accessToken });
+
+      await expect(validate(session.accessToken)).resolves.toBeNull();
+      await expect(
+        authCaller().refresh({ refreshToken: session.refreshToken }),
+      ).resolves.toBeNull();
+      await expect(validate(other.accessToken)).resolves.not.toBeNull();
+    });
+
+    it("does nothing for a token no Session has", async () => {
+      await expect(signOut("not-a-real-token")).resolves.toBeUndefined();
+    });
+  });
 });

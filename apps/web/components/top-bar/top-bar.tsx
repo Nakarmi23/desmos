@@ -7,6 +7,7 @@ import { getActiveHref } from "@/components/nav/nav-active";
 import { NAV_ITEMS } from "@/components/nav/nav-items";
 import { MobileMenuTrigger } from "@/components/sidebar/mobile-menu-trigger";
 import { SidebarTrigger } from "@/components/sidebar/sidebar-trigger";
+import { UserMenuButton } from "@/components/sidebar/user-menu";
 
 import { topBarStyles } from "./top-bar.styles";
 
@@ -27,7 +28,10 @@ export function TopBar({ actions }: { actions?: ReactNode }) {
         <MobileMenuTrigger />
         <h1 className={styles.title()}>{activeItem?.label ?? "Dashboard"}</h1>
       </div>
-      <div className={styles.actions()}>{actions}</div>
+      <div className={styles.actions()}>
+        {actions}
+        <UserMenuButton />
+      </div>
     </header>
   );
 }

@@ -51,3 +51,13 @@ export function setSessionCookies(
     );
   }
 }
+
+/**
+ * Removes a Session's cookies from `cookies`, set to expire with the same
+ * attributes they were set with so the browser matches them.
+ */
+export function clearSessionCookies(cookies: CookieJar): void {
+  for (const name of [ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE]) {
+    cookies.set(name, "", sessionCookieOptions(new Date(0)));
+  }
+}
