@@ -116,6 +116,14 @@ export const sidebarStyles = tv({
     // The user menu's popup animates in/out from its anchor side using Base
     // UI's `data-starting-style`/`data-ending-style` (set right as it opens
     // / right before it's removed) rather than a hand-rolled keyframe.
+    // Above the table's sticky header (`z-10`) and filter popups (`z-20`),
+    // like the nav tooltips.
+    userMenuPositioner: "z-50",
+    // The TopBar's avatar-only trigger, on small screens.
+    userMenuAvatarTrigger: [
+      "flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md outline-none lg:hidden",
+      "hover:bg-background-neutral-hovered focus-visible:outline-2 focus-visible:outline-border-selected",
+    ],
     userMenuPopup: [
       "w-56 rounded-md border border-border bg-surface p-1 shadow-lg outline-none",
       "transition-[transform,opacity] duration-150 ease-out",
