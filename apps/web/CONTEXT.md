@@ -81,3 +81,20 @@ A User's account state: `active` or `suspended`.
 The Bulk Action that moves one or more Users out of `active` status. The only way to remove a
 User's access — Users are never deleted; the record and its data are retained.
 _Avoid_: Deactivate, Delete
+
+### Authentication
+
+**Sign in**:
+Proving to the app that you are a particular User, by Username and password, which starts a
+**Session**. Only an `active` User holding at least one Role can sign in. Every rejection gets the
+same generic message, so it never reveals whether the Username exists or why the attempt failed.
+_Avoid_: login, log in
+
+**Sign out**:
+Ending the current Session on purpose.
+_Avoid_: logout, log out
+
+**Session**:
+One signed-in browser for one User. A User may have several at once. A Session ends on Sign out,
+after 7 days without use, 30 days after Sign in regardless of use, or the moment its User loses access (Suspended, or left with no Roles).
+Everything in the app except the sign-in page requires a Session.
