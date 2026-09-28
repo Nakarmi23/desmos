@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   refresh,
   signIn,
+  signOut,
   validateAccessToken,
 } from "../../modules/auth/service";
 import { publicProcedure, router } from "../init";
@@ -46,4 +47,14 @@ export const authRouter = router({
   refresh: publicProcedure
     .input(z.object({ refreshToken: z.string() }))
     .mutation(({ input }) => refresh(input.refreshToken)),
+
+  /** Ends the Session the tokens belong to; the User's others go on. */
+  signOut: publicProcedure
+    .input(
+      z.object({
+        refreshToken: z.string().optional(),
+        accessToken: z.string().optional(),
+      }),
+    )
+    .mutation(({ input }) => signOut(input)),
 });

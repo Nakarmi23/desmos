@@ -5,7 +5,7 @@ export const topBarStyles = tv({
     root: "flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-surface px-6",
     titleGroup: "flex items-center gap-2",
     title: "text-base font-medium text-text",
-    // Slot for future controls (account menu, search, ...).
+    // Page controls, then the account menu (small screens only).
     actions: "flex items-center gap-2",
   },
 });

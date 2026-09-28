@@ -7,6 +7,8 @@ import { hashPassword, verifyPassword } from "../users/password";
 import {
   deleteEndedSessions,
   deleteSession,
+  deleteSessionByAccessToken,
+  deleteSessionByRefreshToken,
   findLiveSessionByRefreshToken,
   deleteExpiredAccessTokens,
   findSessionUser,
@@ -104,19 +106,30 @@ export async function signIn(
   return tokens;
 }
 
+/** A signed-in User: who they are, and what to call them. */
+export type SignedInUser = { id: string; name: string; username: string };
+
 /**
  * The User whose Session this access token belongs to, or `null` once that
  * Session no longer grants access (see `findSessionUser`).
  */
-export async function validateAccessToken(
+export async function findSignedInUser(
   accessToken: string,
-): Promise<{ userId: string } | null> {
-  const session = await findSessionUser(
+): Promise<SignedInUser | null> {
+  const user = await findSessionUser(
     hashToken(accessToken),
     new Date(),
     MAX_SESSION_AGE_MS,
   );
-  return session ?? null;
+  return user ?? null;
+}
+
+/** `findSignedInUser`, as just the User's id. */
+export async function validateAccessToken(
+  accessToken: string,
+): Promise<{ userId: string } | null> {
+  const user = await findSignedInUser(accessToken);
+  return user && { userId: user.id };
 }
 
 /**
@@ -173,6 +186,23 @@ export async function refresh(
     if (rotated) return tokens;
   }
   return null;
+}
+
+/**
+ * Sign out: ends the Session the tokens belong to, and only that one. The
+ * refresh token finds it even as the one just replaced; the access token is
+ * the fallback for a browser that has lost its refresh cookie.
+ */
+export async function signOut(tokens: {
+  refreshToken?: string;
+  accessToken?: string;
+}): Promise<void> {
+  if (tokens.refreshToken) {
+    await deleteSessionByRefreshToken(hashToken(tokens.refreshToken));
+  }
+  if (tokens.accessToken) {
+    await deleteSessionByAccessToken(hashToken(tokens.accessToken));
+  }
 }
 
 function newAccessToken(now: number) {

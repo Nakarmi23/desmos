@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { SessionProvider } from "@/components/session/session-provider";
 import { TopBar } from "@/components/top-bar/top-bar";
 
 import { SidebarProvider } from "./sidebar-provider";
@@ -16,10 +17,15 @@ jest.mock("next/navigation", () => ({
 // together here — matching how the real dashboard layout composes them.
 function renderSidebar({ collapsed = false } = {}) {
   return render(
-    <SidebarProvider defaultCollapsed={collapsed}>
-      <Sidebar />
-      <TopBar />
-    </SidebarProvider>,
+    <SessionProvider
+      user={{ id: "ada-id", name: "Ada Lovelace", username: "ada" }}
+      signOut={jest.fn()}
+    >
+      <SidebarProvider defaultCollapsed={collapsed}>
+        <Sidebar />
+        <TopBar />
+      </SidebarProvider>
+    </SessionProvider>,
   );
 }
 

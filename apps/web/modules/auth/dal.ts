@@ -88,7 +88,7 @@ export async function findSessionUser(
   accessTokenHash: string,
   now: Date,
   maxAgeMs: number,
-): Promise<{ userId: string } | undefined> {
+): Promise<{ id: string; name: string; username: string } | undefined> {
   return db("session_access_tokens")
     .join("sessions", "sessions.id", "session_access_tokens.session_id")
     .join("users", "users.id", "sessions.user_id")
@@ -96,7 +96,7 @@ export async function findSessionUser(
     .where("session_access_tokens.expires_at", ">", now)
     .where("sessions.created_at", ">", before(now, maxAgeMs))
     .modify(grantsAccess)
-    .first({ userId: "users.id" });
+    .first({ id: "users.id", name: "users.name", username: "users.username" });
 }
 
 /** Narrows a query joined to `users` to Users who still have access. */
@@ -176,4 +176,31 @@ export async function rotateRefreshToken(
 /** Ends a Session outright; every token it had stops working. */
 export async function deleteSession(sessionId: string): Promise<void> {
   await db("sessions").where({ id: sessionId }).delete();
+}
+
+/**
+ * Ends the Session a refresh token belongs to, as its current token or the
+ * one it just replaced. Its access tokens go with it.
+ */
+export async function deleteSessionByRefreshToken(
+  refreshTokenHash: string,
+): Promise<void> {
+  await db("sessions")
+    .where("refresh_token_hash", refreshTokenHash)
+    .orWhere("previous_refresh_token_hash", refreshTokenHash)
+    .delete();
+}
+
+/** Ends the Session an access token belongs to. */
+export async function deleteSessionByAccessToken(
+  accessTokenHash: string,
+): Promise<void> {
+  await db("sessions")
+    .whereIn(
+      "id",
+      db("session_access_tokens")
+        .where("token_hash", accessTokenHash)
+        .select("session_id"),
+    )
+    .delete();
 }
