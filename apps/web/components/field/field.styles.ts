@@ -8,8 +8,10 @@ export const fieldStyles = tv({
     required: "ml-0.5 text-text-danger",
     control:
       "group/control flex w-full min-w-0 cursor-text items-center gap-2 rounded-md border border-border bg-surface text-text hover:border-border-selected/60 focus-within:border-border-selected focus-within:outline-2 focus-within:outline-border-selected data-[invalid]:border-border-danger data-[invalid]:focus-within:outline-border-danger data-[readonly]:bg-surface-sunken data-[disabled]:cursor-not-allowed data-[disabled]:bg-surface-sunken data-[disabled]:opacity-60 data-[disabled]:hover:border-border",
+    // Browsers' own search-clear and (Edge) password-reveal buttons are
+    // hidden: fields bring their own (`clearable`, `PasswordField`).
     input:
-      "min-w-0 flex-1 bg-transparent text-text outline-none placeholder:text-text-subtle disabled:cursor-not-allowed [&::-webkit-search-cancel-button]:appearance-none",
+      "min-w-0 flex-1 bg-transparent text-text outline-none placeholder:text-text-subtle disabled:cursor-not-allowed [&::-webkit-search-cancel-button]:appearance-none [&::-ms-reveal]:hidden [&::-ms-clear]:hidden",
     adornment:
       "flex shrink-0 items-center text-text-subtle [&>svg]:size-4 group-data-[disabled]/control:pointer-events-none",
     spinner: "size-4 animate-spin text-text-subtle",
