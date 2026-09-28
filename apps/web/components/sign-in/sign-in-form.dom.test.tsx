@@ -80,4 +80,71 @@ describe("SignInForm", () => {
     );
     expect(screen.getByLabelText(/Username/)).toHaveValue("admin");
   });
+
+  describe("validation", () => {
+    const signInButton = () => screen.getByRole("button", { name: "Sign in" });
+
+    it("flags an empty Username and password on the fields, without submitting", async () => {
+      const action = jest.fn<ReturnType<Action>, Parameters<Action>>();
+      render(<SignInForm action={action} />);
+
+      await userEvent.click(signInButton());
+
+      const username = screen.getByLabelText(/Username/);
+      const password = screen.getByLabelText(/Password/);
+      expect(username).toBeInvalid();
+      expect(username).toHaveAccessibleDescription("Enter your Username");
+      expect(password).toBeInvalid();
+      expect(password).toHaveAccessibleDescription("Enter your password");
+      expect(action).not.toHaveBeenCalled();
+    });
+
+    it("treats a blank Username as empty", async () => {
+      render(<SignInForm action={jest.fn()} />);
+
+      await userEvent.type(screen.getByLabelText(/Username/), "   ");
+      await userEvent.type(screen.getByLabelText(/Password/), "secret");
+      await userEvent.click(signInButton());
+
+      expect(screen.getByLabelText(/Username/)).toHaveAccessibleDescription(
+        "Enter your Username",
+      );
+      expect(screen.getByLabelText(/Password/)).not.toBeInvalid();
+    });
+
+    it("keeps what was typed and submits once the fields are filled in", async () => {
+      const action = jest.fn<ReturnType<Action>, Parameters<Action>>(
+        async () => undefined,
+      );
+      render(<SignInForm action={action} />);
+
+      await userEvent.type(screen.getByLabelText(/Password/), "secret");
+      await userEvent.click(signInButton());
+      expect(screen.getByLabelText(/Password/)).toHaveValue("secret");
+      expect(action).not.toHaveBeenCalled();
+
+      await userEvent.type(screen.getByLabelText(/Username/), "admin");
+      await userEvent.click(signInButton());
+
+      await waitFor(() => expect(action).toHaveBeenCalledTimes(1));
+      expect(screen.getByLabelText(/Username/)).not.toBeInvalid();
+    });
+
+    it("shows field errors the action reports", async () => {
+      render(
+        <SignInForm
+          action={async () => ({
+            fieldErrors: { password: "Enter your password" },
+            username: "admin",
+          })}
+        />,
+      );
+
+      await fillAndSubmit();
+
+      expect(
+        await screen.findByLabelText(/Password/),
+      ).toHaveAccessibleDescription("Enter your password");
+    });
+  });
 });
