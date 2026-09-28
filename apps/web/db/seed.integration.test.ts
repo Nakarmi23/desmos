@@ -1,7 +1,6 @@
 import { verify } from "@node-rs/argon2";
 
-import { createCaller } from "../trpc/caller";
-import { createContextInner } from "../trpc/context";
+import { signedInCaller } from "../trpc/test-callers";
 import { db, destroyPool } from "./index";
 
 const INITIAL_ADMIN_VARS = [
@@ -23,8 +22,7 @@ async function migrateFromEmpty() {
   return run as string[];
 }
 
-const listRoles = async () =>
-  createCaller(await createContextInner()).roles.list();
+const listRoles = async () => (await signedInCaller()).roles.list();
 const initialUsers = () => db("users").select();
 
 describe("Initial Role and Initial User seed (integration)", () => {

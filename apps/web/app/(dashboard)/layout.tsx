@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { MobileSidebarDrawer } from "@/components/sidebar/mobile-sidebar-drawer";
@@ -9,12 +10,18 @@ import {
 } from "@/components/sidebar/sidebar-cookie";
 import { SidebarProvider } from "@/components/sidebar/sidebar-provider";
 import { TopBar } from "@/components/top-bar/top-bar";
+import { getCurrentUser } from "@/modules/auth/current-user";
+import { SIGN_IN_PATH } from "@/modules/auth/return-to";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  // `proxy.ts` already turns away requests without a Session; this is the
+  // check that doesn't depend on it.
+  if (!(await getCurrentUser())) redirect(SIGN_IN_PATH);
+
   const cookieStore = await cookies();
   const defaultCollapsed = parseSidebarCollapsedCookie(
     cookieStore.get(SIDEBAR_COLLAPSED_COOKIE_NAME)?.value,

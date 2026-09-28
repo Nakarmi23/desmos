@@ -6,8 +6,7 @@ import {
   usersTableConfig,
 } from "@/components/users/users-table-config";
 import { toUsersListInput } from "@/modules/users/user";
-import { createCaller } from "@/trpc/caller";
-import { createContextInner } from "@/trpc/context";
+import { createServerCaller } from "@/trpc/server";
 import { UsersPageTable } from "./users-page-table";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -27,7 +26,7 @@ export default async function UsersPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const caller = createCaller(await createContextInner());
+  const caller = await createServerCaller();
   // The Roles filter's options come from the Roles that exist, so the URL is
   // read against them.
   const roleOptions = toRoleOptions(await caller.roles.list());

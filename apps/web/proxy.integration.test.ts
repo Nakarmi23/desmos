@@ -60,6 +60,13 @@ describe("proxy (integration)", () => {
     it("lets the sign-in page through", async () => {
       await expect(redirectOf(request("/sign-in"))).resolves.toBeNull();
     });
+
+    it("answers an API request with 401, not a redirect", async () => {
+      const response = await proxy(request("/api/trpc/users.list"));
+
+      expect(response.status).toBe(401);
+      expect(getRedirectUrl(response)).toBeNull();
+    });
   });
 
   describe("with a Session", () => {
@@ -67,6 +74,15 @@ describe("proxy (integration)", () => {
       await expect(
         redirectOf(request("/users", accessToken)),
       ).resolves.toBeNull();
+    });
+
+    it("lets an API request through", async () => {
+      const response = await proxy(
+        request("/api/trpc/users.list", accessToken),
+      );
+
+      expect(response.status).toBe(200);
+      expect(getRedirectUrl(response)).toBeNull();
     });
 
     it("sends the sign-in page on to where the User was going", async () => {
@@ -151,6 +167,16 @@ describe("proxy (integration)", () => {
       });
     });
 
+    it("refreshes an API request too, so the procedure sees the new access token", async () => {
+      const stale = await staleSession();
+
+      const response = await proxy(staleRequest("/api/trpc/users.list", stale));
+
+      expect(response.status).toBe(200);
+      const access = response.cookies.get(ACCESS_TOKEN_COOKIE)!.value;
+      expect(forwardedCookies(response)[ACCESS_TOKEN_COOKIE]).toBe(access);
+    });
+
     it("refreshes when the browser has already dropped the access cookie", async () => {
       const { refreshToken } = await staleSession();
 
@@ -183,6 +209,7 @@ describe("proxy (integration)", () => {
       unstable_doesMiddlewareMatch({ config, url });
 
     expect(runsOn("/users")).toBe(true);
+    expect(runsOn("/api/trpc/users.list")).toBe(true);
     expect(runsOn("/")).toBe(true);
     expect(runsOn("/_next/static/chunks/app.js")).toBe(false);
     expect(runsOn("/_next/image?url=x")).toBe(false);

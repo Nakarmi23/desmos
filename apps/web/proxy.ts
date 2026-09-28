@@ -5,15 +5,22 @@ import {
   REFRESH_TOKEN_COOKIE,
   setSessionCookies,
 } from "./modules/auth/cookies";
-import { SIGN_IN_PATH, safeReturnTo } from "./modules/auth/return-to";
+import {
+  SIGN_IN_PATH,
+  safeReturnTo,
+  signInPath,
+} from "./modules/auth/return-to";
 import type { RefreshedTokens } from "./modules/auth/service";
 import { authCaller } from "./trpc/auth-caller";
 
+const API_PATH = "/api/trpc";
+
 /**
- * Gates every page behind a Session (CONTEXT.md). Checks the access token
- * against the database, not just the cookie's presence, so a Suspended User
- * is turned away on their next request (ADR 0005). An expired access token
- * is refreshed here, transparently: Server Components can't set cookies.
+ * Gates every page and API call behind a Session (CONTEXT.md). Checks the
+ * access token against the database, not just the cookie's presence, so a
+ * Suspended User is turned away on their next request (ADR 0005). An
+ * expired access token is refreshed here, transparently: Server Components
+ * can't set cookies.
  */
 export async function proxy(request: NextRequest) {
   const { signedIn, refreshed } = await resolveSession(request);
@@ -31,12 +38,15 @@ export async function proxy(request: NextRequest) {
     // tokens, not the stale ones the browser sent.
     if (refreshed) forwardTokens(request, refreshed);
     response = NextResponse.next({ request: { headers: request.headers } });
+  } else if (pathname.startsWith(API_PATH)) {
+    // An API caller gets a status to act on, not a sign-in page to parse.
+    response = NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   } else {
     // Dead cookies are left alone: a parallel request's response may just
     // have set fresh ones, and clearing here could land after it.
-    const signIn = new URL(SIGN_IN_PATH, request.url);
-    signIn.searchParams.set("returnTo", pathname + search);
-    response = NextResponse.redirect(signIn);
+    response = NextResponse.redirect(
+      new URL(signInPath(pathname + search), request.url),
+    );
   }
 
   if (refreshed) setSessionCookies(response.cookies, refreshed);
@@ -69,9 +79,9 @@ function forwardTokens(request: NextRequest, tokens: RefreshedTokens) {
 }
 
 export const config = {
-  // Everything but static assets and metadata files. API routes answer for
-  // themselves.
+  // Every page, and the tRPC API. Not static assets or metadata files.
   matcher: [
     "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
+    "/api/trpc/:path*",
   ],
 };

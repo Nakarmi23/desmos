@@ -10,7 +10,9 @@ access immediately, which a stateless access token can't guarantee without a per
 that would erase its benefit. The access/refresh split (rather than one rotating Session token) is
 there for a planned non-browser client, which can hold the pair and refresh the conventional way.
 
-**Consequences**: every authenticated request costs a DB lookup. Only SHA-256 hashes of tokens are
+**Consequences**: every authenticated request costs a DB lookup — two, in fact: `proxy.ts` checks
+the Session, and the page or procedure checks it again (`getCurrentUser`, once per request), so
+protection never rests on the proxy alone. Only SHA-256 hashes of tokens are
 stored. The `auth` tRPC procedures deal only in tokens, never cookies; the browser gets them via
 thin adapters (Server Actions for Sign in/out, `proxy.ts` for transparent refresh), since Server
 Components can't set cookies.

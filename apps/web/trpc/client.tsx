@@ -6,6 +6,7 @@ import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import superjson from "superjson";
 
+import { signInPath } from "../modules/auth/return-to";
 import { makeQueryClient } from "./query-client";
 import type { AppRouter } from "./routers/_app";
 
@@ -30,11 +31,26 @@ function getUrl() {
   return `${base}/api/trpc`;
 }
 
-export function TRPCReactProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+/**
+ * `fetch`, except that a 401 — the Session has ended (Suspended, revoked,
+ * expired) — sends the browser to sign in, then back where it was.
+ */
+async function signInOnUnauthorized(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  const response = await fetch(input, init);
+  if (response.status === 401 && typeof window !== "undefined") {
+    const returnTo = window.location.pathname + window.location.search;
+    // A full page load, not `router.push`: a client navigation already in
+    // flight (e.g. a Table writing its View to the URL) would override a
+    // push, and a full load also drops everything cached for the old User.
+    window.location.assign(signInPath(returnTo));
+  }
+  return response;
+}
+
+export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
   const [trpcClient] = useState(() =>
     createTRPCClient<AppRouter>({
@@ -42,6 +58,7 @@ export function TRPCReactProvider({
         httpBatchLink({
           url: getUrl(),
           transformer: superjson,
+          fetch: signInOnUnauthorized,
         }),
       ],
     }),

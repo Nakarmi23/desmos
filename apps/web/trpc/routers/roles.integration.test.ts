@@ -1,12 +1,18 @@
 import { db, destroyPool } from "../../db";
-import { createCaller } from "../caller";
-import { createContextInner } from "../context";
+import { anonymousCaller, signedInCaller } from "../test-callers";
 
-const caller = async () => createCaller(await createContextInner());
+const caller = signedInCaller;
 
 describe("roles.list (integration)", () => {
   beforeAll(() => db.migrate.latest());
   afterAll(() => destroyPool());
+
+  it("rejects a caller who isn't signed in", async () => {
+    const anonymous = await anonymousCaller();
+    await expect(anonymous.roles.list()).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+  });
 
   it("returns the seeded Administrator Role as a System Role", async () => {
     expect(await (await caller()).roles.list()).toEqual([

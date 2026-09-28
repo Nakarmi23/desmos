@@ -1,6 +1,6 @@
 import { listRoles } from "../../modules/roles/dal";
-import { publicProcedure, router } from "../init";
+import { protectedProcedure, router } from "../init";
 
 export const rolesRouter = router({
-  list: publicProcedure.query(() => listRoles()),
+  list: protectedProcedure.query(() => listRoles()),
 });

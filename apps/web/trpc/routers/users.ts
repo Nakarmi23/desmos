@@ -1,9 +1,9 @@
 import { listUsersWithRoles } from "../../modules/users/service";
 import { usersListInputSchema } from "../../modules/users/user";
-import { publicProcedure, router } from "../init";
+import { protectedProcedure, router } from "../init";
 
 export const usersRouter = router({
-  list: publicProcedure.input(usersListInputSchema).query(({ input }) =>
+  list: protectedProcedure.input(usersListInputSchema).query(({ input }) =>
     listUsersWithRoles({
       page: input.page,
       pageSize: input.pageSize,
