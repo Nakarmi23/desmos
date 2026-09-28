@@ -11,7 +11,6 @@ import {
 import Link from "next/link";
 import { startTransition } from "react";
 
-import { IconButton } from "@/components/button/button";
 import { useSession } from "@/components/session/session-provider";
 
 import { sidebarStyles } from "./sidebar.styles";
@@ -41,7 +40,12 @@ export function UserMenu() {
         {/* `sideOffset` puts clear air between the sidebar and the popup;
             `align="end"` keeps it from spilling below the viewport since the
             trigger sits at the very bottom of the sidebar. */}
-        <Menu.Positioner side="right" align="end" sideOffset={12}>
+        <Menu.Positioner
+          side="right"
+          align="end"
+          sideOffset={12}
+          className={styles.userMenuPositioner()}
+        >
           <UserMenuPopup />
         </Menu.Positioner>
       </Menu.Portal>
@@ -59,15 +63,19 @@ export function UserMenuButton() {
   return (
     <Menu.Root>
       <Menu.Trigger
-        render={
-          <IconButton label={`Account: ${user.name}`} className="lg:hidden" />
-        }
+        aria-label={`Account: ${user.name}`}
+        className={styles.userMenuAvatarTrigger()}
       >
-        <UserAvatar name={user.name} size={24} />
+        <UserAvatar name={user.name} size={28} />
       </Menu.Trigger>
 
       <Menu.Portal>
-        <Menu.Positioner side="bottom" align="end" sideOffset={8}>
+        <Menu.Positioner
+          side="bottom"
+          align="end"
+          sideOffset={8}
+          className={styles.userMenuPositioner()}
+        >
           <UserMenuPopup />
         </Menu.Positioner>
       </Menu.Portal>
