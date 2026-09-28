@@ -65,9 +65,9 @@ A single thing a Role allows its holders to do. (Defined later, alongside sign-i
 The Role and User that exist from the moment the app is first set up, so there is always someone
 who can sign in and administer it. The Initial User's credentials come from the deployment's
 configuration, never from source code. There is exactly one Initial User, fixed at setup, forever.
-It can't be suspended or lose the Initial Role; its name, username, email and password remain
-editable, and any other active holder of the Initial Role can reset its password (so leaked setup
-credentials can always be revoked from inside the app). Other Users may also hold the Initial Role — the Initial User is simply the one
+It can't be suspended or lose the Initial Role, and its name, username and email are fixed at
+setup too. Only its password stays editable, and any other active holder of the Initial Role can
+reset it (so leaked setup credentials can always be revoked from inside the app). Other Users may also hold the Initial Role — the Initial User is simply the one
 holder that can never lose it.
 
 **System Role**:
