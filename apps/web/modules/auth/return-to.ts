@@ -18,3 +18,8 @@ export function safeReturnTo(returnTo: string | null | undefined): string {
   }
   return url.pathname + url.search + url.hash;
 }
+
+/** The sign-in page, remembering to come back to `returnTo`. */
+export function signInPath(returnTo: string): string {
+  return `${SIGN_IN_PATH}?${new URLSearchParams({ returnTo })}`;
+}

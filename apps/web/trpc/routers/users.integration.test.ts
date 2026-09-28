@@ -6,10 +6,9 @@ import {
   normalizeUsername,
 } from "../../modules/users/normalize";
 import type { RoleRef } from "../../modules/users/user";
-import { createCaller } from "../caller";
-import { createContextInner } from "../context";
+import { anonymousCaller, signedInCaller } from "../test-callers";
 
-const caller = async () => createCaller(await createContextInner());
+const caller = signedInCaller;
 
 type Seed = {
   name: string;
@@ -125,6 +124,13 @@ describe("users.list (integration)", () => {
       .delete();
     await db("roles").whereIn("name", EXTRA_ROLES).delete();
     await destroyPool();
+  });
+
+  it("rejects a caller who isn't signed in", async () => {
+    const anonymous = await anonymousCaller();
+    await expect(
+      anonymous.users.list({ page: 1, pageSize: 25, sort: null, filters: {} }),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
   it("returns each User's listed fields and never a password hash", async () => {
