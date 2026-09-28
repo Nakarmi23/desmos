@@ -25,15 +25,17 @@ type CookieJar = {
 
 /**
  * Stores a Session's tokens in `cookies` — the Server Action's cookie store
- * or a proxy response's — each cookie living as long as its token.
+ * or a proxy response's — each cookie living as long as its token. Without
+ * a refresh token (a refresh that kept the current one), that cookie is
+ * left as it is.
  */
 export function setSessionCookies(
   cookies: CookieJar,
   tokens: {
     accessToken: string;
     accessTokenExpiresAt: Date;
-    refreshToken: string;
-    refreshTokenExpiresAt: Date;
+    refreshToken?: string;
+    refreshTokenExpiresAt?: Date;
   },
 ): void {
   cookies.set(
@@ -41,9 +43,11 @@ export function setSessionCookies(
     tokens.accessToken,
     sessionCookieOptions(tokens.accessTokenExpiresAt),
   );
-  cookies.set(
-    REFRESH_TOKEN_COOKIE,
-    tokens.refreshToken,
-    sessionCookieOptions(tokens.refreshTokenExpiresAt),
-  );
+  if (tokens.refreshToken && tokens.refreshTokenExpiresAt) {
+    cookies.set(
+      REFRESH_TOKEN_COOKIE,
+      tokens.refreshToken,
+      sessionCookieOptions(tokens.refreshTokenExpiresAt),
+    );
+  }
 }

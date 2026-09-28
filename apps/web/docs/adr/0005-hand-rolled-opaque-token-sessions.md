@@ -14,3 +14,17 @@ there for a planned non-browser client, which can hold the pair and refresh the 
 stored. The `auth` tRPC procedures deal only in tokens, never cookies; the browser gets them via
 thin adapters (Server Actions for Sign in/out, `proxy.ts` for transparent refresh), since Server
 Components can't set cookies.
+
+**Grace-window reuse gets an access token only.** Parallel requests (tabs, a page and its RSC
+fetches) refresh with the same token at once, and the browser applies their `Set-Cookie`s in
+whatever order responses land. If reuse rotated the refresh token again, the browser could keep a
+superseded one and a later refresh would look like theft, revoking a legitimate Session. So only
+the current refresh token ever rotates; reuse within the window gets a new access token and keeps
+the replacement. A Session therefore holds several live access tokens (`session_access_tokens`),
+each living out its 15 minutes — a new one never cancels another request's.
+
+Accepted consequences: a refresh doesn't end the old access token early (it lives out its 15
+minutes; revocation and Suspension still end every token at once). Only the most recently replaced
+refresh token is remembered, so one replaced two or more rotations ago is simply unknown — refused,
+but it doesn't trigger revocation; catching those would need a table of every token a Session has
+had. "Use", for the 7-day idle timeout, means a refresh.

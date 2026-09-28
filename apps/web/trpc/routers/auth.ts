@@ -1,7 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { signIn, validateAccessToken } from "../../modules/auth/service";
+import {
+  refresh,
+  signIn,
+  validateAccessToken,
+} from "../../modules/auth/service";
 import { publicProcedure, router } from "../init";
 
 /** The one message every failed Sign in gets, whatever the reason. */
@@ -37,4 +41,9 @@ export const authRouter = router({
   validate: publicProcedure
     .input(z.object({ accessToken: z.string() }))
     .query(({ input }) => validateAccessToken(input.accessToken)),
+
+  /** New tokens for a refresh token's Session (see `refresh`), or `null` if it has ended. */
+  refresh: publicProcedure
+    .input(z.object({ refreshToken: z.string() }))
+    .mutation(({ input }) => refresh(input.refreshToken)),
 });

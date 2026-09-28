@@ -5,7 +5,11 @@ import {
 import { NextRequest } from "next/server";
 
 import { db, destroyPool } from "./db";
-import { ACCESS_TOKEN_COOKIE } from "./modules/auth/cookies";
+import {
+  ACCESS_TOKEN_COOKIE,
+  REFRESH_TOKEN_COOKIE,
+} from "./modules/auth/cookies";
+import { hashToken } from "./modules/auth/tokens";
 import { authCaller } from "./trpc/auth-caller";
 import { config, proxy } from "./proxy";
 
@@ -85,6 +89,93 @@ describe("proxy (integration)", () => {
         await expect(redirectOf(request(path, accessToken))).resolves.toBe("/");
       },
     );
+  });
+
+  describe("with an expired access token", () => {
+    /** A fresh Session whose access tokens have all expired. */
+    async function staleSession() {
+      const tokens = await authCaller().signIn({
+        username: "admin",
+        password: "local-dev-admin-password",
+      });
+      await db("session_access_tokens")
+        .whereIn(
+          "session_id",
+          db("sessions")
+            .where({ refresh_token_hash: hashToken(tokens.refreshToken) })
+            .select("id"),
+        )
+        .update({ expires_at: new Date(Date.now() - 1000) });
+      return tokens;
+    }
+
+    function staleRequest(
+      path: string,
+      tokens: { accessToken?: string; refreshToken: string },
+    ) {
+      const req = request(path, tokens.accessToken);
+      req.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refreshToken);
+      return req;
+    }
+
+    /** The cookies the rest of this request (pages, Server Components) sees. */
+    function forwardedCookies(response: Response) {
+      const header = response.headers.get("x-middleware-request-cookie") ?? "";
+      return Object.fromEntries(
+        header.split("; ").map((pair) => pair.split("=") as [string, string]),
+      );
+    }
+
+    it("refreshes the Session and lets the request through with the new tokens", async () => {
+      const stale = await staleSession();
+
+      const response = await proxy(staleRequest("/users", stale));
+
+      expect(getRedirectUrl(response)).toBeNull();
+      const access = response.cookies.get(ACCESS_TOKEN_COOKIE)!;
+      const refresh = response.cookies.get(REFRESH_TOKEN_COOKIE)!;
+      expect(access.value).not.toBe(stale.accessToken);
+      expect(refresh.value).not.toBe(stale.refreshToken);
+      expect(access).toMatchObject({
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+      });
+      await expect(
+        authCaller().validate({ accessToken: access.value }),
+      ).resolves.not.toBeNull();
+      // The page rendered for this very request sees the new tokens too.
+      expect(forwardedCookies(response)).toMatchObject({
+        [ACCESS_TOKEN_COOKIE]: access.value,
+        [REFRESH_TOKEN_COOKIE]: refresh.value,
+      });
+    });
+
+    it("refreshes when the browser has already dropped the access cookie", async () => {
+      const { refreshToken } = await staleSession();
+
+      const response = await proxy(staleRequest("/users", { refreshToken }));
+
+      expect(getRedirectUrl(response)).toBeNull();
+      expect(response.cookies.get(ACCESS_TOKEN_COOKIE)).toBeDefined();
+    });
+
+    it("sends the sign-in page on once refreshed", async () => {
+      const stale = await staleSession();
+
+      const response = await proxy(
+        staleRequest("/sign-in?returnTo=%2Froles", stale),
+      );
+
+      expect(getRedirectUrl(response)?.replace(ORIGIN, "")).toBe("/roles");
+      expect(response.cookies.get(ACCESS_TOKEN_COOKIE)).toBeDefined();
+    });
+
+    it("sends the request to sign in when the Session can't be refreshed", async () => {
+      await expect(
+        redirectOf(staleRequest("/users", { refreshToken: "revoked" })),
+      ).resolves.toBe(`/sign-in?returnTo=${encodeURIComponent("/users")}`);
+    });
   });
 
   it("runs on pages but not on static assets", () => {
