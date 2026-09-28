@@ -1,6 +1,6 @@
-import { db } from "../../db";
+import { listRolesHeld } from "../role-holdings/dal";
 import { listUsers, type ListUsersQuery } from "./dal";
-import type { RoleRef, UserListRow } from "./user";
+import type { UserListRow } from "./user";
 
 /** A page of Users, each with the Roles they hold, plus the total. */
 export async function listUsersWithRoles(
@@ -15,27 +15,4 @@ export async function listUsersWithRoles(
     })),
     total,
   };
-}
-
-// The Roles each User holds, by name. `user_roles` is a bare link table, so
-// it's read inline here rather than owning a module
-// (docs/modules-convention.md).
-async function listRolesHeld(
-  userIds: string[],
-): Promise<Map<string, RoleRef[]>> {
-  const held: (RoleRef & { userId: string })[] = await db("user_roles")
-    .join("roles", "roles.id", "user_roles.role_id")
-    .whereIn("user_roles.user_id", userIds)
-    .select({
-      userId: "user_roles.user_id",
-      id: "roles.id",
-      name: "roles.name",
-    })
-    .orderByRaw("lower(roles.name)");
-
-  const byUser = new Map<string, RoleRef[]>();
-  for (const { userId, id, name } of held) {
-    byUser.set(userId, [...(byUser.get(userId) ?? []), { id, name }]);
-  }
-  return byUser;
 }

@@ -34,6 +34,8 @@ no SQL of their own.
 - When a **second consumer** appears, that bare join table is **promoted to its own small module
   named for the relationship** (name it for what the link means, not `shared/`), so both consumers
   import the same access functions instead of duplicating them.
+  `modules/role-holdings/` (`user_roles`, used by Users and auth) is the first; its `EXISTS`
+  subquery builder is what a consumer's DAL query embeds.
 - **A join table that carries real attributes** (columns beyond the two foreign keys) gets **its own
   module from the start** — it's an entity in its own right, not just a link.
 

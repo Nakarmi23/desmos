@@ -1,6 +1,7 @@
 import type { Knex } from "knex";
 
 import { db } from "../../db";
+import { rolesHeldByUser } from "../role-holdings/dal";
 import type {
   DateFilter,
   TextFilter,
@@ -8,6 +9,7 @@ import type {
   UserListFields,
   UserSort,
   UserSortColumn,
+  UserStatus,
 } from "./user";
 
 export type ListUsersQuery = {
@@ -101,9 +103,7 @@ function applyColumnFilters(
   // so it lives here rather than in the service with the Roles lookup.
   const roles = filters.roles;
   if (roles?.values.length) {
-    const holdsAny = db("user_roles")
-      .whereRaw("user_roles.user_id = users.id")
-      .whereIn("user_roles.role_id", roles.values);
+    const holdsAny = rolesHeldByUser(roles.values);
     if (roles.operator === "in") query.whereExists(holdsAny);
     else query.whereNotExists(holdsAny);
   }
@@ -183,4 +183,26 @@ function applySearch(where: Knex.QueryBuilder, search: string | undefined) {
 // `%` and `_` in the search term are literal characters, not wildcards.
 function escapeLike(term: string): string {
   return term.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
+export type UserCredentials = {
+  id: string;
+  passwordHash: string;
+  status: UserStatus;
+  /** Holds at least one Role; without one a User has no access. */
+  holdsRole: boolean;
+};
+
+/** What Sign in checks a Username against. */
+export async function findUserCredentials(
+  username: string,
+): Promise<UserCredentials | undefined> {
+  return db("users")
+    .where({ username })
+    .first({
+      id: "id",
+      passwordHash: "password_hash",
+      status: "status",
+      holdsRole: db.raw("exists ?", [rolesHeldByUser()]),
+    });
 }
