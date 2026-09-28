@@ -1,6 +1,5 @@
 import {
   Activity,
-  HeartPulse,
   Layers,
   LayoutGrid,
   Settings,
@@ -39,7 +38,6 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: "/", label: "Overview", icon: <Layers size={14} /> },
       { href: "/activity", label: "Activity", icon: <Activity size={14} /> },
-      { href: "/health", label: "Health", icon: <HeartPulse size={14} /> },
       {
         href: "/users",
         label: "Users",
