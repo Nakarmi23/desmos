@@ -32,6 +32,16 @@ const MINUTE_MS = 60_000;
 const DAY_MS = 24 * 60 * MINUTE_MS;
 const ago = (ms: number) => new Date(Date.now() - ms);
 
+/** Every access token of the User's Sessions, expired as of now. */
+async function expireAccessTokens(userId: string) {
+  await db("session_access_tokens")
+    .whereIn(
+      "session_id",
+      db("sessions").where({ user_id: userId }).select("id"),
+    )
+    .update({ expires_at: ago(1) });
+}
+
 const signIn = (input: {
   username: string;
   password: string;
@@ -150,9 +160,7 @@ describe("auth (integration)", () => {
 
     it("rejects an expired access token", async () => {
       const { userId, accessToken } = await signedIn("expired-access");
-      await db("sessions")
-        .where({ user_id: userId })
-        .update({ access_token_expires_at: ago(1) });
+      await expireAccessTokens(userId);
 
       await expect(validate(accessToken)).resolves.toBeNull();
     });
@@ -178,6 +186,151 @@ describe("auth (integration)", () => {
       await db("user_roles").where({ user_id: userId }).delete();
 
       await expect(validate(accessToken)).resolves.toBeNull();
+    });
+  });
+
+  describe("refresh", () => {
+    const refresh = (refreshToken: string) =>
+      authCaller().refresh({ refreshToken });
+    const validate = (accessToken: string) =>
+      authCaller().validate({ accessToken });
+
+    /** A fresh User, signed in: their id and Session tokens. */
+    async function signedIn(username: string) {
+      const userId = await createUser(username);
+      const tokens = await signIn({ username, password: PASSWORD });
+      return { userId, ...tokens };
+    }
+
+    it("swaps the Session's tokens for a new pair", async () => {
+      const { userId, accessToken, refreshToken } =
+        await signedIn("refreshing");
+
+      const next = await refresh(refreshToken);
+
+      expect(next).toEqual({
+        accessToken: expect.any(String),
+        accessTokenExpiresAt: expect.any(Date),
+        refreshToken: expect.any(String),
+        refreshTokenExpiresAt: expect.any(Date),
+      });
+      expect(next!.accessToken).not.toBe(accessToken);
+      expect(next!.refreshToken).not.toBe(refreshToken);
+      await expect(validate(next!.accessToken)).resolves.toEqual({ userId });
+      // The old access token lives out its 15 minutes, so requests already
+      // in flight with it don't fail.
+      await expect(validate(accessToken)).resolves.toEqual({ userId });
+    });
+
+    it("rejects a token no Session has", async () => {
+      await expect(refresh("not-a-real-token")).resolves.toBeNull();
+    });
+
+    it("tolerates the replaced token within 30 seconds with an access token only, keeping the replacement", async () => {
+      const { userId, refreshToken } = await signedIn("parallel-tabs");
+      const winner = (await refresh(refreshToken))!;
+
+      const again = await refresh(refreshToken);
+
+      expect(again).toEqual({
+        accessToken: expect.any(String),
+        accessTokenExpiresAt: expect.any(Date),
+      });
+      await expect(validate(again!.accessToken)).resolves.toEqual({ userId });
+      // The parallel refresh didn't cancel the winner's tokens.
+      await expect(validate(winner.accessToken)).resolves.toEqual({ userId });
+      await expect(refresh(winner.refreshToken!)).resolves.toHaveProperty(
+        "refreshToken",
+      );
+    });
+
+    it("lets simultaneous refreshes with one token all succeed", async () => {
+      const { refreshToken } = await signedIn("simultaneous");
+
+      const results = await Promise.all([
+        refresh(refreshToken),
+        refresh(refreshToken),
+        refresh(refreshToken),
+      ]);
+
+      expect(results).toEqual([
+        expect.objectContaining({ accessToken: expect.any(String) }),
+        expect.objectContaining({ accessToken: expect.any(String) }),
+        expect.objectContaining({ accessToken: expect.any(String) }),
+      ]);
+    });
+
+    it("revokes the Session when the replaced token turns up after 30 seconds", async () => {
+      const { userId, refreshToken } = await signedIn("stolen-token");
+      const current = (await refresh(refreshToken))!;
+      await db("sessions")
+        .where({ user_id: userId })
+        .update({ refresh_token_rotated_at: ago(31_000) });
+
+      await expect(refresh(refreshToken)).resolves.toBeNull();
+
+      // Every token of that Session is dead, the legitimate ones included.
+      await expect(validate(current.accessToken)).resolves.toBeNull();
+      await expect(refresh(current.refreshToken!)).resolves.toBeNull();
+    });
+
+    it("counts idleness from the last refresh, not the last request", async () => {
+      const { userId, accessToken, refreshToken } = await signedIn("in-use");
+      const nearlyIdle = ago(7 * DAY_MS - MINUTE_MS);
+      await db("sessions")
+        .where({ user_id: userId })
+        .update({ last_used_at: nearlyIdle });
+      const lastUsed = async () =>
+        (await db("sessions").where({ user_id: userId }).first("last_used_at"))
+          .last_used_at as Date;
+
+      await validate(accessToken);
+      expect(await lastUsed()).toEqual(nearlyIdle);
+
+      await expect(refresh(refreshToken)).resolves.not.toBeNull();
+      expect((await lastUsed()).getTime()).toBeGreaterThan(
+        Date.now() - MINUTE_MS,
+      );
+    });
+
+    it.each([
+      ["unrefreshed for 7 days", { last_used_at: ago(7 * DAY_MS + MINUTE_MS) }],
+      ["30 days old", { created_at: ago(30 * DAY_MS + MINUTE_MS) }],
+    ])("refuses a Session %s", async (_, backdated) => {
+      const { userId, refreshToken } = await signedIn(
+        `ended-${Object.keys(backdated)[0]}`,
+      );
+      await db("sessions").where({ user_id: userId }).update(backdated);
+
+      await expect(refresh(refreshToken)).resolves.toBeNull();
+    });
+
+    it("never lets a refresh token outlive the Session's 30 days", async () => {
+      const { userId, refreshToken } = await signedIn("nearly-old");
+      const createdAt = ago(29 * DAY_MS);
+      await db("sessions")
+        .where({ user_id: userId })
+        .update({ created_at: createdAt });
+
+      const next = (await refresh(refreshToken))!;
+
+      expect(next.refreshTokenExpiresAt).toEqual(
+        new Date(createdAt.getTime() + 30 * DAY_MS),
+      );
+    });
+
+    it("refuses once the User is Suspended", async () => {
+      const { userId, refreshToken } = await signedIn("suspended-later");
+      await db("users").where({ id: userId }).update({ status: "suspended" });
+
+      await expect(refresh(refreshToken)).resolves.toBeNull();
+    });
+
+    it("refuses once the User holds no Roles", async () => {
+      const { userId, refreshToken } = await signedIn("roles-removed");
+      await db("user_roles").where({ user_id: userId }).delete();
+
+      await expect(refresh(refreshToken)).resolves.toBeNull();
     });
   });
 });
