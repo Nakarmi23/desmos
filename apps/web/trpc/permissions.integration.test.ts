@@ -1,7 +1,8 @@
 import { db, destroyPool } from "../db";
-import { PERMISSIONS, type Permission } from "../modules/permissions/catalog";
+import { PERMISSIONS } from "../modules/permissions/catalog";
 import { findPermissionsHeld } from "../modules/permissions/service";
 import { callerAs, initialUserCaller } from "./test-callers";
+import { createRole, createUser, removeTestData } from "./test-fixtures";
 
 const USERS_LIST_INPUT = {
   page: 1,
@@ -10,39 +11,11 @@ const USERS_LIST_INPUT = {
   filters: {},
 } as const;
 
-/** A Role granting `permissions`, removed again by `cleanUp`. */
-async function createRole(name: string, permissions: Permission[]) {
-  const [{ id }] = await db("roles").insert({ name }).returning("id");
-  if (permissions.length > 0) {
-    await db("role_permissions").insert(
-      permissions.map((key) => ({ role_id: id, permission_key: key })),
-    );
-  }
-  return id as string;
-}
-
-/** An active User holding `roleIds`, removed again by `cleanUp`. */
-async function createUser(username: string, roleIds: string[]) {
-  const [{ id }] = await db("users")
-    .insert({ name: username, username, password_hash: "not-a-hash" })
-    .returning("id");
-  if (roleIds.length > 0) {
-    await db("user_roles").insert(
-      roleIds.map((roleId) => ({ user_id: id, role_id: roleId })),
-    );
-  }
-  return id as string;
-}
-
-const TEST_USERNAMES = ["perm-nobody", "perm-viewer", "perm-both"];
-const TEST_ROLES = ["Perm Empty", "Perm Users", "Perm Roles"];
-
-async function cleanUp() {
-  const users = db("users").whereIn("username", TEST_USERNAMES).select("id");
-  await db("user_roles").whereIn("user_id", users).delete();
-  await db("users").whereIn("username", TEST_USERNAMES).delete();
-  await db("roles").whereIn("name", TEST_ROLES).delete();
-}
+const TEST_DATA = {
+  usernames: ["perm-nobody", "perm-viewer", "perm-both"],
+  roleNames: ["Perm Empty", "Perm Users", "Perm Roles"],
+};
+const cleanUp = () => removeTestData(TEST_DATA);
 
 describe("Permissions (integration)", () => {
   beforeAll(async () => {

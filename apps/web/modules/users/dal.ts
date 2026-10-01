@@ -1,6 +1,7 @@
 import type { Knex } from "knex";
 
 import { db } from "../../db";
+import { escapeLike } from "../../db/escape-like";
 import { rolesHeldByUser } from "../role-holdings/dal";
 import type {
   DateFilter,
@@ -178,11 +179,6 @@ function applySearch(where: Knex.QueryBuilder, search: string | undefined) {
     .whereILike("name", pattern)
     .orWhereILike("username", pattern)
     .orWhereILike("email", pattern);
-}
-
-// `%` and `_` in the search term are literal characters, not wildcards.
-function escapeLike(term: string): string {
-  return term.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
 
 export type UserCredentials = {

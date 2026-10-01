@@ -1,6 +1,7 @@
+import { listPermissionsGranted } from "../role-grants/dal";
 import { holdsSystemRole } from "../role-holdings/dal";
 import type { Permission } from "./catalog";
-import { listPermissionKeys, listPermissionsGranted } from "./dal";
+import { listPermissionKeys } from "./dal";
 
 /**
  * The Permissions this User's Roles grant, combined. A System Role grants

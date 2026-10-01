@@ -1,7 +1,11 @@
 import { Suspense } from "react";
 
 import { NoAccess } from "@/components/no-access/no-access";
-import { decodeTableView } from "@/components/table/table-url-state";
+import {
+  decodeTableView,
+  toURLSearchParams,
+  type PageSearchParams,
+} from "@/components/table/table-url-state";
 import {
   toRoleOptions,
   usersTableConfig,
@@ -11,22 +15,12 @@ import { toUsersListInput } from "@/modules/users/user";
 import { createServerCaller } from "@/trpc/server";
 import { UsersPageTable } from "./users-page-table";
 
-type SearchParams = Record<string, string | string[] | undefined>;
-
-function toURLSearchParams(searchParams: SearchParams): URLSearchParams {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(searchParams)) {
-    for (const item of [value ?? []].flat()) params.append(key, item);
-  }
-  return params;
-}
-
 // The first view is loaded here, in-process (ADR 0001), and rendered with
 // the page; the Table fetches every later view from the client.
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<SearchParams>;
+  searchParams: Promise<PageSearchParams>;
 }) {
   if (!(await currentUserHolds("users.view"))) return <NoAccess />;
 

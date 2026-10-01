@@ -190,3 +190,17 @@ function isRealDay(text: string): boolean {
 function sameSort(a: TableSort, b: TableSort): boolean {
   return a?.columnId === b?.columnId && a?.direction === b?.direction;
 }
+
+/** A page's `searchParams`, as Next.js hands them to it. */
+export type PageSearchParams = Record<string, string | string[] | undefined>;
+
+/** A page's `searchParams` as `URLSearchParams`, for `decodeTableView`. */
+export function toURLSearchParams(
+  searchParams: PageSearchParams,
+): URLSearchParams {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(searchParams)) {
+    for (const item of [value ?? []].flat()) params.append(key, item);
+  }
+  return params;
+}

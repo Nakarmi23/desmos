@@ -44,3 +44,16 @@ export async function holdsSystemRole(userId: string): Promise<boolean> {
     .first(db.raw("1"));
   return row !== undefined;
 }
+
+/**
+ * How many Users hold the Role in the enclosing query's `roles` row, whatever
+ * their Status, as a subquery to select.
+ */
+export function holderCountOfRole() {
+  return db("user_roles").count("*").whereRaw("user_roles.role_id = roles.id");
+}
+
+/** The ids of the Roles this User holds, as a subquery for `whereIn`. */
+export function roleIdsHeldBy(userId: string) {
+  return db("user_roles").where("user_id", userId).select("role_id");
+}
