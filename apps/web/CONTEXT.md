@@ -59,7 +59,17 @@ can add Roles beyond the **Initial Role**. A User holding several Roles gets eve
 them grants combined; Roles never contain other Roles.
 
 **Permission**:
-A single thing a Role allows its holders to do. (Defined later, alongside sign-in.)
+A single thing a Role allows its holders to do: one action on one **Resource** (e.g. "Roles: edit"),
+or a one-off ability that isn't about a Resource (e.g. editing a settings section). The app defines
+the Permissions; admins can only choose which ones each Role grants, never invent new ones. Any
+action other than view needs view on the same Resource too. Changing a Role's Permissions takes
+effect for all of its holders immediately.
+
+**Resource**:
+A kind of thing Permissions are granted over. Users have view, create, edit and suspend (suspend
+also covers reactivating). Roles have view, create, edit and delete. Each dynamic module will
+become a Resource later.
+_Avoid_: module (it already means a dynamic module, or a code folder)
 
 **Initial Role** / **Initial User**:
 The Role and User that exist from the moment the app is first set up, so there is always someone
@@ -71,8 +81,17 @@ reset it (so leaked setup credentials can always be revoked from inside the app)
 holder that can never lose it.
 
 **System Role**:
-A Role the app itself depends on, which admins can't delete or rename. The Initial Role
-("Administrator") is the only one.
+A Role the app itself depends on, which admins can't edit or delete at all. The Initial Role
+("Administrator") is the only one, and it always grants every Permission, including ones added
+later.
+
+**Delegation rule**:
+When creating, editing or deleting a Role, a User can only add or remove Permissions they hold
+themselves, and can only delete a Role whose Permissions they all hold. This lets a non-Administrator
+Role (e.g. an "Access Manager") manage Roles without ever handing out more than it has.
+
+**Delete (Role)**:
+Removing a Role for good. Only possible while no User holds it.
 
 **Status**:
 A User's account state: `active` or `suspended`.
