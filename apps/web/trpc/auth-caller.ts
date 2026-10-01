@@ -8,5 +8,5 @@ const createAuthCaller = createCallerFactory(authRouter);
  * calls it in-process, as no one in particular.
  */
 export function authCaller() {
-  return createAuthCaller({ user: null });
+  return createAuthCaller({ user: null, permissions: [] });
 }

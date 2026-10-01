@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { SessionProvider } from "@/components/session/session-provider";
+import type { Permission } from "@/modules/permissions/catalog";
 import { TopBar } from "@/components/top-bar/top-bar";
 
 import { SidebarProvider } from "./sidebar-provider";
@@ -14,10 +15,13 @@ jest.mock("next/navigation", () => ({
 // `TopBar` (which owns the hamburger trigger) and `MobileSidebarDrawer` are
 // siblings sharing `SidebarProvider` state, matching the real dashboard
 // layout's composition.
-function renderDrawer() {
+function renderDrawer(
+  permissions: Permission[] = ["users.view", "roles.view"],
+) {
   return render(
     <SessionProvider
       user={{ id: "ada-id", name: "Ada Lovelace", username: "ada" }}
+      permissions={permissions}
       signOut={jest.fn()}
     >
       <SidebarProvider defaultCollapsed={false}>
@@ -71,5 +75,17 @@ describe("MobileSidebarDrawer", () => {
     const inactiveLink = screen.getByRole("link", { name: "Settings" });
     expect(inactiveLink).not.toHaveAttribute("aria-current");
     expect(inactiveLink).not.toHaveAttribute("data-active");
+  });
+
+  it("hides the nav items the User can't view", async () => {
+    const user = userEvent.setup();
+    renderDrawer(["roles.view"]);
+
+    await user.click(screen.getByRole("button", { name: "Open navigation" }));
+
+    expect(screen.getByRole("link", { name: "Roles" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Users" }),
+    ).not.toBeInTheDocument();
   });
 });

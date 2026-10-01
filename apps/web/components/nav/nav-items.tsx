@@ -8,6 +8,8 @@ import {
   Users,
 } from "lucide-react";
 
+import type { Permission } from "@/modules/permissions/catalog";
+
 // The dashboard's nav model, shared by the sidebar (which renders a section
 // per group) and the top bar (which derives the page title from the active
 // item via the flattened `NAV_ITEMS`).
@@ -15,6 +17,8 @@ export interface NavItem {
   href: string;
   label: string;
   icon: React.ReactNode;
+  /** Shown only to Users holding this; none means everyone. */
+  permission?: Permission;
 }
 
 export interface NavSection {
@@ -42,11 +46,13 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/users",
         label: "Users",
         icon: <Users size={14} />,
+        permission: "users.view",
       },
       {
         href: "/roles",
         label: "Roles",
         icon: <ShieldCheck size={14} />,
+        permission: "roles.view",
       },
       {
         href: "/modules",
@@ -80,3 +86,13 @@ export const NAV_SECTIONS: NavSection[] = [
 export const NAV_ITEMS: NavItem[] = NAV_SECTIONS.flatMap(
   (section) => section.items,
 );
+
+/** The nav sections as a User holding `permissions` sees them, empty ones dropped. */
+export function visibleNavSections(permissions: Permission[]): NavSection[] {
+  return NAV_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter(
+      (item) => !item.permission || permissions.includes(item.permission),
+    ),
+  })).filter((section) => section.items.length > 0);
+}

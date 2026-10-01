@@ -35,3 +35,12 @@ export async function listRolesHeld(
   }
   return byUser;
 }
+
+/** Whether this User holds a System Role. */
+export async function holdsSystemRole(userId: string): Promise<boolean> {
+  const row = await db("user_roles")
+    .join("roles", "roles.id", "user_roles.role_id")
+    .where({ "user_roles.user_id": userId, "roles.is_system": true })
+    .first(db.raw("1"));
+  return row !== undefined;
+}

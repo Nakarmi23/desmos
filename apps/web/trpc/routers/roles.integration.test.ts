@@ -1,7 +1,7 @@
 import { db, destroyPool } from "../../db";
-import { anonymousCaller, signedInCaller } from "../test-callers";
+import { anonymousCaller, initialUserCaller } from "../test-callers";
 
-const caller = signedInCaller;
+const caller = initialUserCaller;
 
 describe("roles.list (integration)", () => {
   beforeAll(() => db.migrate.latest());

@@ -1,6 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 
+import type { Permission } from "../modules/permissions/catalog";
 import type { Context } from "./context";
 
 const t = initTRPC.context<Context>().create({
@@ -21,3 +22,13 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
   return next({ ctx: { user: ctx.user } });
 });
+
+/** Needs a signed-in User holding at least one of `permissions`. */
+export function procedureRequiringAny(...permissions: Permission[]) {
+  return protectedProcedure.use(({ ctx, next }) => {
+    if (!permissions.some((p) => ctx.permissions.includes(p))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    return next();
+  });
+}

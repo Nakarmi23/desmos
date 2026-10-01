@@ -1,10 +1,12 @@
 import { Suspense } from "react";
 
+import { NoAccess } from "@/components/no-access/no-access";
 import { decodeTableView } from "@/components/table/table-url-state";
 import {
   toRoleOptions,
   usersTableConfig,
 } from "@/components/users/users-table-config";
+import { currentUserHolds } from "@/modules/permissions/current-permissions";
 import { toUsersListInput } from "@/modules/users/user";
 import { createServerCaller } from "@/trpc/server";
 import { UsersPageTable } from "./users-page-table";
@@ -26,6 +28,8 @@ export default async function UsersPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
+  if (!(await currentUserHolds("users.view"))) return <NoAccess />;
+
   const caller = await createServerCaller();
   // The Roles filter's options come from the Roles that exist, so the URL is
   // read against them.

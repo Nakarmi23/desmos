@@ -4,7 +4,8 @@ import { Collapsible } from "@base-ui/react/collapsible";
 import { usePathname } from "next/navigation";
 
 import { getActiveHref } from "@/components/nav/nav-active";
-import { NAV_ITEMS, NAV_SECTIONS } from "@/components/nav/nav-items";
+import { NAV_ITEMS, visibleNavSections } from "@/components/nav/nav-items";
+import { useSession } from "@/components/session/session-provider";
 
 import { NavSectionGroup } from "./nav-section";
 import { useSidebar } from "./sidebar-provider";
@@ -15,6 +16,7 @@ const styles = sidebarStyles();
 
 export function Sidebar() {
   const { collapsed, setCollapsed } = useSidebar();
+  const { permissions } = useSession();
   const pathname = usePathname();
   const activeHref = getActiveHref(
     pathname,
@@ -40,16 +42,14 @@ export function Sidebar() {
       </header>
 
       <nav className={styles.nav()}>
-        {NAV_SECTIONS.filter((section) => section.items.length > 0).map(
-          (section) => (
-            <NavSectionGroup
-              key={section.id}
-              section={section}
-              activeHref={activeHref}
-              showTooltips={collapsed}
-            />
-          ),
-        )}
+        {visibleNavSections(permissions).map((section) => (
+          <NavSectionGroup
+            key={section.id}
+            section={section}
+            activeHref={activeHref}
+            showTooltips={collapsed}
+          />
+        ))}
       </nav>
 
       <div className={styles.footer()}>

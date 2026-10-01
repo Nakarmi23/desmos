@@ -6,9 +6,9 @@ import {
   normalizeUsername,
 } from "../../modules/users/normalize";
 import type { RoleRef } from "../../modules/users/user";
-import { anonymousCaller, signedInCaller } from "../test-callers";
+import { anonymousCaller, initialUserCaller } from "../test-callers";
 
-const caller = signedInCaller;
+const caller = initialUserCaller;
 
 type Seed = {
   name: string;

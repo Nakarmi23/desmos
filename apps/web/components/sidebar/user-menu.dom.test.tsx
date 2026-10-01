@@ -15,7 +15,7 @@ const ADA = { id: "ada-id", name: "Ada Lovelace", username: "alovelace" };
 
 function renderWithSession(ui: React.ReactNode, signOut = jest.fn()) {
   render(
-    <SessionProvider user={ADA} signOut={signOut}>
+    <SessionProvider user={ADA} permissions={[]} signOut={signOut}>
       <SidebarProvider defaultCollapsed={false}>{ui}</SidebarProvider>
     </SessionProvider>,
   );

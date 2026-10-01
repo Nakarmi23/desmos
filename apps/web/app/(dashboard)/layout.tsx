@@ -13,6 +13,7 @@ import { SidebarProvider } from "@/components/sidebar/sidebar-provider";
 import { TopBar } from "@/components/top-bar/top-bar";
 import { getCurrentUser } from "@/modules/auth/current-user";
 import { SIGN_IN_PATH } from "@/modules/auth/return-to";
+import { getCurrentPermissions } from "@/modules/permissions/current-permissions";
 
 import { signOut } from "./actions";
 
@@ -25,6 +26,7 @@ export default async function DashboardLayout({
   // check that doesn't depend on it.
   const user = await getCurrentUser();
   if (!user) redirect(SIGN_IN_PATH);
+  const permissions = await getCurrentPermissions();
 
   const cookieStore = await cookies();
   const defaultCollapsed = parseSidebarCollapsedCookie(
@@ -32,7 +34,7 @@ export default async function DashboardLayout({
   );
 
   return (
-    <SessionProvider user={user} signOut={signOut}>
+    <SessionProvider user={user} permissions={permissions} signOut={signOut}>
       <SidebarProvider defaultCollapsed={defaultCollapsed}>
         <div className="flex h-screen">
           <Sidebar />

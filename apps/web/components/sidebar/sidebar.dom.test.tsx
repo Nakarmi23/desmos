@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { SessionProvider } from "@/components/session/session-provider";
+import type { Permission } from "@/modules/permissions/catalog";
 import { TopBar } from "@/components/top-bar/top-bar";
 
 import { SidebarProvider } from "./sidebar-provider";
@@ -15,10 +16,14 @@ jest.mock("next/navigation", () => ({
 
 // The collapse toggle lives in `TopBar`, not `Sidebar` itself, so both render
 // together here — matching how the real dashboard layout composes them.
-function renderSidebar({ collapsed = false } = {}) {
+function renderSidebar({
+  collapsed = false,
+  permissions = ["users.view", "roles.view"] as Permission[],
+} = {}) {
   return render(
     <SessionProvider
       user={{ id: "ada-id", name: "Ada Lovelace", username: "ada" }}
+      permissions={permissions}
       signOut={jest.fn()}
     >
       <SidebarProvider defaultCollapsed={collapsed}>
@@ -95,5 +100,23 @@ describe("Sidebar", () => {
     expect(
       screen.queryByText("Settings", { selector: TOOLTIP_POPUP }),
     ).not.toBeInTheDocument();
+  });
+
+  it("shows the Users and Roles nav items only to Users who can view them", () => {
+    const { unmount } = renderSidebar({ permissions: ["users.view"] });
+    expect(screen.getByRole("link", { name: "Users" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Roles" }),
+    ).not.toBeInTheDocument();
+    unmount();
+
+    renderSidebar({ permissions: [] });
+    expect(
+      screen.queryByRole("link", { name: "Users" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Roles" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Overview" })).toBeInTheDocument();
   });
 });
