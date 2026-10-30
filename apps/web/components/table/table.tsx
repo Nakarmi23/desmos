@@ -65,7 +65,7 @@ export type TableProps<T extends RowData> = {
    * wins — give the URL codec the same `defaultSort` so it fills that in.
    */
   defaultSort?: TableSort;
-  /** Adds a checkbox column; a toolbar with these actions shows while rows are selected. */
+  /** Offered in the toolbar that shows while rows are selected. */
   bulkActions?: readonly TableBulkAction[];
   /**
    * The view to open on (e.g. read from the URL), used on mount only. A page
@@ -103,8 +103,10 @@ const features = tableFeatures({
 const EMPTY_ROWS: never[] = [];
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
 
-/** Id of the checkbox column, present only when the Table has Bulk Actions. */
+// Ids of the two columns every Table leads with: the Selection's checkbox
+// and the S.N.
 const SELECT_COLUMN_ID = "_select";
+const SERIAL_COLUMN_ID = "_serial";
 
 /** Selected row ids, tagged with the view they were picked in. */
 type Selection = { key: string; ids: ReadonlySet<string> };
@@ -147,11 +149,7 @@ export function Table<T extends RowData>({
 
   // Every default a column leaves out, filled in from its `type`.
   const resolved = useMemo(() => columns.map(resolveColumn), [columns]);
-  const hasBulkActions = bulkActions !== undefined && bulkActions.length > 0;
-  const columnDefs = useMemo(
-    () => toColumnDefs(resolved, hasBulkActions),
-    [resolved, hasBulkActions],
-  );
+  const columnDefs = useMemo(() => toColumnDefs(resolved), [resolved]);
   const alignById = useMemo(
     () => new Map(resolved.map((c) => [c.id, c.align])),
     [resolved],
@@ -439,14 +437,14 @@ export function Table<T extends RowData>({
           </div>
         )
       )}
-      {hasBulkActions && selectedCount > 0 && (
+      {selectedCount > 0 && (
         <div
           role="toolbar"
           aria-label="Bulk actions"
           className={styles.bulkBar()}
         >
           <span className={styles.bulkCount()}>{selectedCount} selected</span>
-          {bulkActions.map((action) => (
+          {bulkActions?.map((action) => (
             <Button
               key={action.id}
               size="sm"
@@ -488,6 +486,7 @@ export function Table<T extends RowData>({
                     }
                     className={styles.headerCell({
                       select: header.column.id === SELECT_COLUMN_ID,
+                      serial: header.column.id === SERIAL_COLUMN_ID,
                     })}
                     style={{ width: widthById.get(header.column.id) }}
                   >
@@ -542,6 +541,7 @@ export function Table<T extends RowData>({
                       data-align={alignById.get(cell.column.id)}
                       className={styles.cell({
                         select: cell.column.id === SELECT_COLUMN_ID,
+                        serial: cell.column.id === SERIAL_COLUMN_ID,
                       })}
                     >
                       {cell.column.id === SELECT_COLUMN_ID ? (
@@ -550,6 +550,8 @@ export function Table<T extends RowData>({
                           checked={selected.has(row.id)}
                           onChange={() => toggleRow(row.id)}
                         />
+                      ) : cell.column.id === SERIAL_COLUMN_ID ? (
+                        pageIndex * pageSize + rowIndex + 1
                       ) : (
                         <table.FlexRender cell={cell} />
                       )}
@@ -643,7 +645,6 @@ function SortIndicator<T extends RowData>({
 
 function toColumnDefs<T extends RowData>(
   columns: readonly ResolvedTableColumn<T>[],
-  withSelectColumn: boolean,
 ): ColumnDef<typeof features, T>[] {
   const defs: ColumnDef<typeof features, T>[] = columns.map((column) => {
     const render = column.render;
@@ -666,12 +667,18 @@ function toColumnDefs<T extends RowData>(
             ),
         };
   });
-  if (!withSelectColumn) return defs;
-  // Placeholder: the checkbox itself is drawn by the Table, which owns the state.
+  // Placeholders: the Table draws both itself — the checkbox from the
+  // Selection it owns, the S.N. from the page the row is on.
   return [
     {
       id: SELECT_COLUMN_ID,
       header: "",
+      enableSorting: false,
+      cell: () => null,
+    },
+    {
+      id: SERIAL_COLUMN_ID,
+      header: "S.N.",
       enableSorting: false,
       cell: () => null,
     },

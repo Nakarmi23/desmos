@@ -34,9 +34,14 @@ Search. Kept in the page URL's query string, so a View can be bookmarked, shared
 Back/Forward step through Views. Selection is not part of the View.
 
 **Selection**:
-The set of currently checked rows in a Table. Scoped to the current page only — the "select all"
-control selects just the visible page, and any page, sort, or search/filter change clears it.
-Only present when the Table is configured with at least one Bulk Action.
+The set of currently checked rows in a Table. Every Table offers it, whether or not it has any Bulk
+Actions. Scoped to the current page only — the "select all" control selects just the visible page,
+and any page, sort, or search/filter change clears it.
+
+**S.N.**:
+A row's serial number: its position in the current View, counting from 1 across pages (the first
+row of page 2 at 25 per page is 26). Every Table shows it. It numbers the rows as listed, so it
+isn't a record's id and changes with sort and search.
 
 **Bulk Action**:
 An operation a Table's caller can offer against the current Selection, surfaced via a toolbar

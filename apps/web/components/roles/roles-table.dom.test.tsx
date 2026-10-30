@@ -64,6 +64,8 @@ const fetchRoles = jest.fn<
 const cellTexts = (name: string) =>
   within(screen.getByRole("gridcell", { name }).closest("tr")!)
     .getAllByRole("gridcell")
+    // After the checkbox and S.N.
+    .slice(2)
     .map((cell) => cell.textContent);
 
 describe("RolesTable", () => {
@@ -74,6 +76,8 @@ describe("RolesTable", () => {
     expect(
       screen.getAllByRole("columnheader").map((header) => header.textContent),
     ).toEqual([
+      "",
+      "S.N.",
       "Name",
       "Type",
       "Description",

@@ -46,7 +46,7 @@ const firstColumnTexts = () =>
   screen
     .getAllByRole("row")
     .slice(1)
-    .map((row) => within(row).getAllByRole("gridcell")[1].textContent);
+    .map((row) => within(row).getAllByRole("gridcell")[2].textContent);
 
 // Skeleton rows also render gridcells, just empty ones.
 const loadedNames = () => {
@@ -103,7 +103,8 @@ describe("UsersTable", () => {
     );
   });
 
-  const COLUMN = { name: 1, roles: 4, status: 5, created: 6 } as const;
+  // After the checkbox and S.N.
+  const COLUMN = { name: 2, roles: 5, status: 6, created: 7 } as const;
   const cellsOf = (column: number) =>
     screen
       .getAllByRole("row")
@@ -134,11 +135,20 @@ describe("UsersTable", () => {
 
     expect(
       screen.getAllByRole("columnheader").map((header) => header.textContent),
-    ).toEqual(["", "Name", "Username", "Email", "Roles", "Status", "Created"]);
+    ).toEqual([
+      "",
+      "S.N.",
+      "Name",
+      "Username",
+      "Email",
+      "Roles",
+      "Status",
+      "Created",
+    ]);
     const cellTexts = (name: string) =>
       within(screen.getByRole("gridcell", { name }).closest("tr")!)
         .getAllByRole("gridcell")
-        .slice(1);
+        .slice(2);
     expect(cellTexts("Ava Thompson").map((cell) => cell.textContent)).toEqual([
       "Ava Thompson",
       "ava.thompson",
@@ -259,7 +269,7 @@ describe("UsersTable", () => {
         .getAllByRole("row")
         .slice(1)
         .map((row) =>
-          within(within(row).getAllByRole("gridcell")[4])
+          within(within(row).getAllByRole("gridcell")[5])
             .queryAllByRole("listitem")
             .map((chip) => chip.textContent),
         );

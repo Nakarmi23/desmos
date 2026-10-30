@@ -55,5 +55,12 @@ export const tableStyles = tv({
     select: {
       true: { headerCell: "w-10", cell: "w-10" },
     },
+    // The S.N. column: narrow, numbers right-aligned.
+    serial: {
+      true: {
+        headerCell: "w-14 text-right",
+        cell: "w-14 text-right tabular-nums text-text-subtle",
+      },
+    },
   },
 });

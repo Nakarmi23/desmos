@@ -99,9 +99,10 @@ describe("Table", () => {
 
     await screen.findByText("Ada");
     const grid = screen.getByRole("grid");
-    expect(grid).toHaveAttribute("aria-colcount", "2");
+    // Checkbox, S.N., Name, Age.
+    expect(grid).toHaveAttribute("aria-colcount", "4");
     expect(grid).toHaveAttribute("aria-rowcount", "3"); // header + 2 rows
-    expect(screen.getAllByRole("gridcell")).toHaveLength(4);
+    expect(screen.getAllByRole("gridcell")).toHaveLength(8);
   });
 
   it("is a single tab stop and moves cell focus with the keyboard", async () => {
@@ -116,6 +117,9 @@ describe("Table", () => {
     expect(tabbable).toHaveLength(1);
 
     await user.tab();
+    // The first column holds the select-all checkbox, then S.N.
+    expect(screen.getAllByRole("columnheader")[0]).toHaveFocus();
+    await user.keyboard("{ArrowRight}{ArrowRight}");
     expect(screen.getByRole("columnheader", { name: "Name" })).toHaveFocus();
 
     await user.keyboard("{ArrowDown}");
@@ -132,13 +136,15 @@ describe("Table", () => {
     expect(screen.getByRole("gridcell", { name: "45" })).toHaveFocus();
 
     await user.keyboard("{Home}");
-    expect(screen.getByRole("gridcell", { name: "Grace" })).toHaveFocus();
+    expect(
+      screen.getByRole("checkbox", { name: "Select row 2" }).closest("td"),
+    ).toHaveFocus();
 
     await user.keyboard("{End}");
     expect(screen.getByRole("gridcell", { name: "45" })).toHaveFocus();
 
     await user.keyboard("{Control>}{Home}{/Control}");
-    expect(screen.getByRole("columnheader", { name: "Name" })).toHaveFocus();
+    expect(screen.getAllByRole("columnheader")[0]).toHaveFocus();
 
     await user.keyboard("{Control>}{End}{/Control}");
     expect(screen.getByRole("gridcell", { name: "45" })).toHaveFocus();
@@ -182,7 +188,7 @@ describe("Table", () => {
       />,
     );
 
-    const [name, age, nameRight] = await screen.findAllByRole("gridcell");
+    const [, , name, age, nameRight] = await screen.findAllByRole("gridcell");
     expect(name).toHaveAttribute("data-align", "left");
     expect(age).toHaveAttribute("data-align", "right");
     expect(nameRight).toHaveAttribute("data-align", "right");
@@ -215,7 +221,10 @@ describe("Table", () => {
     );
 
     await screen.findByText("Linus");
-    const cells = screen.getAllByRole("gridcell");
+    const cells = screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => within(row).getAllByRole("gridcell")[2]);
     expect(cells.map((cell) => cell.textContent)).toEqual([
       "Pioneer",
       "Grace",
@@ -274,8 +283,9 @@ describe("Table", () => {
     ).toBeInTheDocument();
     const tableRows = screen.getAllByRole("row");
     expect(tableRows).toHaveLength(1 + 4); // header + pageSize skeleton rows
+    // Plus the checkbox and S.N. columns.
     expect(within(tableRows[1]).getAllByRole("gridcell")).toHaveLength(
-      columns.length,
+      columns.length + 2,
     );
   });
 });
@@ -540,6 +550,7 @@ describe("Table sorting", () => {
     renderSortable(fetcher);
     await screen.findByText("Person 1");
     await user.tab();
+    await user.keyboard("{ArrowRight}{ArrowRight}");
     const callsBefore = fetcher.mock.calls.length;
 
     await user.keyboard("{Control>}{Enter}{/Control}");
@@ -557,6 +568,7 @@ describe("Table sorting", () => {
     await screen.findByText("Person 1");
 
     await user.tab();
+    await user.keyboard("{ArrowRight}{ArrowRight}");
     expect(header("Name")).toHaveFocus();
     await user.keyboard("{Enter}");
     await expectLastSort(fetcher, "name", "asc");
@@ -1574,22 +1586,26 @@ describe("Table row selection", () => {
     screen.getByRole("checkbox", { name: "Select all rows on this page" });
   const toolbar = () => screen.queryByRole("toolbar", { name: "Bulk actions" });
 
-  it("renders no checkbox column when the Table has no Bulk Action", async () => {
+  it("offers a checkbox per row on every Table, even without Bulk Actions", async () => {
     renderTable(async () => ({ rows, total: 2 }));
-
-    await screen.findByText("Ada");
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
-    expect(screen.getByRole("grid")).toHaveAttribute("aria-colcount", "2");
-  });
-
-  it("adds a checkbox column when the Table has a Bulk Action", async () => {
-    renderSelectable(async () => ({ rows, total: 2 }));
 
     await screen.findByText("Ada");
     expect(rowCheckboxes()).toHaveLength(2);
     expect(selectAll()).not.toBeChecked();
-    expect(screen.getByRole("grid")).toHaveAttribute("aria-colcount", "3");
+    // Checkbox, S.N., Name, Age.
+    expect(screen.getByRole("grid")).toHaveAttribute("aria-colcount", "4");
     expect(toolbar()).not.toBeInTheDocument();
+  });
+
+  it("counts the Selection even with no Bulk Action to offer", async () => {
+    const user = userEvent.setup();
+    renderTable(async () => ({ rows, total: 2 }));
+    await screen.findByText("Ada");
+
+    await user.click(rowCheckboxes()[0]);
+
+    expect(toolbar()).toHaveTextContent("1 selected");
+    expect(within(toolbar()!).queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("selects and deselects individual rows, showing the toolbar while any is selected", async () => {
@@ -1661,20 +1677,6 @@ describe("Table row selection", () => {
     await user.click(screen.getByRole("button", { name: "Suspend" }));
 
     expect(onSuspend).toHaveBeenCalledWith(["1", "2"]);
-  });
-
-  it("renders no checkbox column when bulkActions is empty", async () => {
-    render(
-      <Table
-        columns={columns}
-        fetcher={async () => ({ rows, total: 2 })}
-        getRowId={(r) => r.id}
-        bulkActions={[]}
-      />,
-    );
-
-    await screen.findByText("Ada");
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   });
 
   it("passes every selected id when select all is used", async () => {
@@ -1981,7 +1983,8 @@ describe("Table multi-value enum column", () => {
 
   const chipsIn = (name: string) => {
     const row = screen.getByRole("gridcell", { name }).closest("tr")!;
-    const cell = within(row).getAllByRole("gridcell")[1];
+    // After the checkbox, S.N. and Name.
+    const cell = within(row).getAllByRole("gridcell")[3];
     return within(cell)
       .queryAllByRole("listitem")
       .map((chip) => chip.textContent);
@@ -1991,7 +1994,7 @@ describe("Table multi-value enum column", () => {
     screen
       .getAllByRole("row")
       .slice(1)
-      .map((row) => within(row).getAllByRole("gridcell")[0].textContent);
+      .map((row) => within(row).getAllByRole("gridcell")[2].textContent);
 
   it("renders every value as a chip, by option label, falling back to the raw value", async () => {
     await renderHolders();
@@ -2134,6 +2137,8 @@ describe("Table empty cells", () => {
       .map((row) =>
         within(row)
           .getAllByRole("gridcell")
+          // After the checkbox and S.N.
+          .slice(2)
           .map((cell) => cell.textContent),
       );
     expect(cells).toEqual([
@@ -2141,5 +2146,36 @@ describe("Table empty cells", () => {
       ["—", "—"],
       ["—", "—"],
     ]);
+  });
+});
+
+describe("Table S.N.", () => {
+  const serialNumbers = () =>
+    screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => within(row).getAllByRole("gridcell")[1].textContent);
+
+  it("numbers the rows after the checkbox, continuing across pages", async () => {
+    const user = userEvent.setup();
+    renderTable(pagedFetcher());
+    await screen.findByText("Person 1");
+
+    expect(
+      screen.getAllByRole("columnheader").map((header) => header.textContent),
+    ).toEqual(["", "S.N.", "Name", "Age"]);
+    expect(
+      screen.getByRole("columnheader", { name: "S.N." }),
+    ).not.toHaveAttribute("aria-sort");
+    expect(serialNumbers()).toEqual(
+      Array.from({ length: 10 }, (_, i) => String(i + 1)),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Page 2" }));
+    await screen.findByText("Person 11");
+
+    expect(serialNumbers()).toEqual(
+      Array.from({ length: 10 }, (_, i) => String(i + 11)),
+    );
   });
 });
